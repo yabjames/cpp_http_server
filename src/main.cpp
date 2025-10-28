@@ -5,8 +5,10 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <thread>
 #include <unistd.h>
 #include "../include/constants.h"
+#include "../include/ServerThreadPool.h"
 
 
 int main(int argc, char *argv[]) {
@@ -62,6 +64,7 @@ int main(int argc, char *argv[]) {
 
 
 
+    HttpServer::ServerThreadPool ResponseHandler {};
     while (1) {
         int listen_status = listen(socket_file_descriptor, Constants::backlog);
         if (listen_status == -1) {
@@ -71,27 +74,17 @@ int main(int argc, char *argv[]) {
 
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
-        int conn_file_descriptor = accept(socket_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
 
+        int conn_file_descriptor = accept(socket_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
         if (conn_file_descriptor == -1) {
             std::cerr << "\n\n" << strerror(errno) << ": issue trying to accept incoming connection\n";
             return 1;
         }
 
-        const char* msg = "hello there good sir!";
-        std::string response =
-        std::string("HTTP/1.1 200 OK\n") +
-        "Content-Length: " + std::to_string(strlen(msg)) + "\n"
-        "Content-Type: raw\n\n" +
-        msg;
-
-        int response_len = response.size();
-        std::cout << "response length: " << response_len << '\n';
-        int bytes_sent = send(conn_file_descriptor, response.c_str(), response_len, 0);
-        if (bytes_sent == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
-        }
-        close(conn_file_descriptor);
+        int thread_idx = ResponseHandler.occupy();
+        std::cout << "thread: " << thread_idx << '\n';
+        std::thread worker(&HttpServer::ServerThreadPool::send_response, &ResponseHandler, thread_idx, conn_file_descriptor);
+        worker.detach();
     }
 
     close(socket_file_descriptor);
