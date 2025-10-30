@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
     // find the first file descriptor that does not fail
     for (addrinfo_ptr = results; addrinfo_ptr != nullptr; addrinfo_ptr = addrinfo_ptr->ai_next) {
-        socket_file_descriptor = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+        socket_file_descriptor = socket(addrinfo_ptr->ai_family, addrinfo_ptr->ai_socktype, addrinfo_ptr->ai_protocol);
         if (socket_file_descriptor == -1) {
             std::cerr << "\n\n" << strerror(errno) << ": issue fetching the socket file descriptor\n";
             continue;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
         }
 
         // associate the socket descriptor with the port passed into getaddrinfo()
-        int bind_status = bind(socket_file_descriptor, results->ai_addr, results->ai_addrlen);
+        int bind_status = bind(socket_file_descriptor, addrinfo_ptr->ai_addr, addrinfo_ptr->ai_addrlen);
         if (bind_status == -1) {
             std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port\n";
             continue;
