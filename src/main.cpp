@@ -62,15 +62,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-
+    int listen_status = listen(socket_file_descriptor, Constants::backlog);
+    if (listen_status == -1) {
+        std::cerr << "\n\n" << strerror(errno) << ": issue trying to call listen()\n";
+        return 1;
+    }
 
     HttpServer::ServerThreadPool ResponseHandler {};
     while (1) {
-        int listen_status = listen(socket_file_descriptor, Constants::backlog);
-        if (listen_status == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue trying to call listen()\n";
-            return 1;
-        }
 
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
@@ -81,10 +80,13 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        int thread_idx = ResponseHandler.occupy();
-        std::cout << "thread: " << thread_idx << '\n';
-        std::thread worker(&HttpServer::ServerThreadPool::send_response, &ResponseHandler, thread_idx, conn_file_descriptor);
-        worker.detach();
+        // ResponseHandler.send_response(conn_file_descriptor);
+
+        ResponseHandler.worker.acquire();
+        std::thread worker(&HttpServer::ServerThreadPool::send_response, &ResponseHandler, conn_file_descriptor);
+        worker.join();
+        ResponseHandler.worker.release();
+
     }
 
     close(socket_file_descriptor);
