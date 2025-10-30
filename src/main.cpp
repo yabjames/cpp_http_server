@@ -8,8 +8,32 @@
 #include <thread>
 #include <unistd.h>
 #include "../include/constants.h"
-#include "../include/ServerThreadPool.h"
 
+std::counting_semaphore<Constants::max_worker_count> thread_limiter{Constants::max_worker_count};
+void handle_client(int conn_fd) {
+    // Read the incoming HTTP request
+    char buffer[4096];
+    ssize_t bytes_read = recv(conn_fd, buffer, sizeof(buffer) - 1, 0);
+
+    if (bytes_read <= 0) {
+        close(conn_fd);
+        return;
+    }
+
+    buffer[bytes_read] = '\0';  // Null-terminate for safety
+
+    // Now send the response
+    const char *response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 0\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n";
+
+    send(conn_fd, response, strlen(response), 0);
+    close(conn_fd);
+    // thread_limiter.release();
+}
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints {};
@@ -22,7 +46,7 @@ int main(int argc, char *argv[]) {
     hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
     hints.ai_flags = AI_PASSIVE;     // fill in IP for us
 
-    int status = getaddrinfo(Constants::hostname, Constants::port, &hints, &results);
+    int status = getaddrinfo(NULL, Constants::port, &hints, &results);
     if (status != 0) {
         std::cerr << stderr << " gai error: " << gai_strerror(status) << '\n';
         return 1;
@@ -35,7 +59,6 @@ int main(int argc, char *argv[]) {
             std::cerr << "\n\n" << strerror(errno) << ": issue fetching the socket file descriptor\n";
             continue;
         }
-        std::cout << "socket file descriptor: " << socket_file_descriptor << '\n';
 
         // set socket options
         int yes = 1;
@@ -68,9 +91,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    HttpServer::ServerThreadPool ResponseHandler {};
     while (1) {
-
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
@@ -80,13 +101,12 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // ResponseHandler.send_response(conn_file_descriptor);
-
-        ResponseHandler.worker.acquire();
-        std::thread worker(&HttpServer::ServerThreadPool::send_response, &ResponseHandler, conn_file_descriptor);
-        worker.join();
-        ResponseHandler.worker.release();
-
+        thread_limiter.acquire();
+        // std::thread(handle_client, conn_file_descriptor).detach();
+        std::thread([conn_file_descriptor]{
+            handle_client(conn_file_descriptor);
+            thread_limiter.release();
+        }).detach();
     }
 
     close(socket_file_descriptor);
