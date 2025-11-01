@@ -35,18 +35,20 @@ void handle_client(int conn_fd) {
     // thread_limiter.release();
 }
 
-int main(int argc, char *argv[]) {
+/*
+ * @brief return a listener socket file descriptor
+ */
+int get_listener_socket() {
     struct addrinfo hints {};
-    struct addrinfo* results {};
     struct addrinfo* addrinfo_ptr {};
+    struct addrinfo* results {};
     int socket_file_descriptor {};
-    // char ipstr[INET6_ADDRSTRLEN] {};
 
     hints.ai_family = AF_UNSPEC;     // can be IPv4 or 6
     hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
     hints.ai_flags = AI_PASSIVE;     // fill in IP for us
 
-    int status = getaddrinfo(NULL, Constants::port, &hints, &results);
+    int status = getaddrinfo(Constants::hostname, Constants::port, &hints, &results);
     if (status != 0) {
         std::cerr << stderr << " gai error: " << gai_strerror(status) << '\n';
         return 1;
@@ -91,23 +93,28 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    return socket_file_descriptor;
+}
+
+int main(int argc, char *argv[]) {
+    int listener_file_descriptor = get_listener_socket();
+
     while (1) {
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
-        int conn_file_descriptor = accept(socket_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
+        int conn_file_descriptor = accept(listener_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
         if (conn_file_descriptor == -1) {
             std::cerr << "\n\n" << strerror(errno) << ": issue trying to accept incoming connection\n";
             return 1;
         }
 
         thread_limiter.acquire();
-        // std::thread(handle_client, conn_file_descriptor).detach();
         std::thread([conn_file_descriptor]{
             handle_client(conn_file_descriptor);
             thread_limiter.release();
         }).detach();
     }
 
-    close(socket_file_descriptor);
+    close(listener_file_descriptor);
 }
