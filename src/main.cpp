@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
 
         int conn_file_descriptor = accept(listener_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
         if (conn_file_descriptor == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue trying to accept incoming connection\n";
-            return 1;
+            std::cerr << strerror(errno) << ": issue trying to accept incoming connection\n";
+            break;
         }
         thread_pool.store_conn_fd(conn_file_descriptor);
     }
