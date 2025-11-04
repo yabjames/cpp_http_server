@@ -5,35 +5,11 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <thread>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/resource.h>
 #include "../include/constants.h"
-
-std::counting_semaphore<Constants::max_worker_count> thread_limiter{Constants::max_worker_count};
-void handle_client(int conn_fd) {
-    // Read the incoming HTTP request
-    char buffer[4096];
-    ssize_t bytes_read = recv(conn_fd, buffer, sizeof(buffer) - 1, 0);
-
-    if (bytes_read <= 0) {
-        close(conn_fd);
-        return;
-    }
-
-    buffer[bytes_read] = '\0';  // Null-terminate for safety
-
-    // Now send the response
-    const char *response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n"
-        "Content-Length: 0\r\n"
-        "Connection: keep-alive\r\n"
-        "\r\n";
-
-    send(conn_fd, response, strlen(response), 0);
-    close(conn_fd);
-    // thread_limiter.release();
-}
+#include "../include/ThreadPool.h"
 
 /*
  * @brief return a listener socket file descriptor
@@ -98,6 +74,11 @@ int get_listener_socket() {
 
 int main(int argc, char *argv[]) {
     int listener_file_descriptor = get_listener_socket();
+    if (listener_file_descriptor < 0) {
+        std::cerr << "unable to obtain listener socket, exiting\n";
+        return 1;
+    }
+    ThreadPool thread_pool {};
 
     while (1) {
         struct sockaddr_storage incoming_addr {};
@@ -108,12 +89,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "\n\n" << strerror(errno) << ": issue trying to accept incoming connection\n";
             return 1;
         }
-
-        thread_limiter.acquire();
-        std::thread([conn_file_descriptor]{
-            handle_client(conn_file_descriptor);
-            thread_limiter.release();
-        }).detach();
+        thread_pool.store_conn_fd(conn_file_descriptor);
     }
 
     close(listener_file_descriptor);
