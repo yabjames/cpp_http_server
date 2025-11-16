@@ -1,6 +1,8 @@
 #include "../include/HttpServer.h"
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <netdb.h>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -27,7 +29,26 @@ HttpServer::HttpServer() {
     }
 }
 
-void HttpServer::listen(std::string port) {}
+void HttpServer::listen(int port) {
+    int listener_file_descriptor = get_listener_socket(port);
+    if (listener_file_descriptor < 0) {
+        std::cerr << "unable to obtain listener socket, exiting\n";
+        std::exit(EXIT_FAILURE);
+    }
+    while (1) {
+        struct sockaddr_storage incoming_addr {};
+        socklen_t addr_size {sizeof(incoming_addr)};
+
+        int conn_file_descriptor = accept(listener_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
+        if (conn_file_descriptor == -1) {
+            std::cerr << strerror(errno) << ": issue trying to accept incoming connection\n";
+            break;
+        }
+        this->store_conn_fd(conn_file_descriptor);
+    }
+
+    close(listener_file_descriptor);
+}
 
 void HttpServer::get_mapping(std::string route, const Handler& fn) {
     get_routes[route] = fn;
@@ -146,4 +167,63 @@ void HttpServer::handle_client() {
 
     }
     std::cout << "thread ending\n";
+}
+
+int HttpServer::get_listener_socket(int port) {
+    std::string port_str = std::to_string(port);
+    struct addrinfo hints {};
+    struct addrinfo* addrinfo_ptr {};
+    struct addrinfo* results {};
+    int socket_file_descriptor {};
+
+    hints.ai_family = AF_UNSPEC;     // can be IPv4 or 6
+    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    hints.ai_flags = AI_PASSIVE;     // fill in IP for us
+
+    int status = getaddrinfo(Constants::hostname, port_str.c_str(), &hints, &results);
+    if (status != 0) {
+        std::cerr << stderr << " gai error: " << gai_strerror(status) << '\n';
+        return 1;
+    }
+
+    // find the first file descriptor that does not fail
+    for (addrinfo_ptr = results; addrinfo_ptr != nullptr; addrinfo_ptr = addrinfo_ptr->ai_next) {
+        socket_file_descriptor = socket(addrinfo_ptr->ai_family, addrinfo_ptr->ai_socktype, addrinfo_ptr->ai_protocol);
+        if (socket_file_descriptor == -1) {
+            std::cerr << "\n\n" << strerror(errno) << ": issue fetching the socket file descriptor\n";
+            continue;
+        }
+
+        // set socket options
+        int yes = 1;
+        int sockopt_status = setsockopt(socket_file_descriptor, SOL_SOCKET,SO_REUSEADDR, &yes, sizeof(int));
+        if (sockopt_status == -1) {
+            std::cerr << "\n\n" << strerror(errno) << ": issue setting socket options\n";
+            return 1;
+        }
+
+        // associate the socket descriptor with the port passed into getaddrinfo()
+        int bind_status = bind(socket_file_descriptor, addrinfo_ptr->ai_addr, addrinfo_ptr->ai_addrlen);
+        if (bind_status == -1) {
+            std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port\n";
+            continue;
+        }
+
+        break;
+    }
+
+    freeaddrinfo(results);
+
+    if (addrinfo_ptr == nullptr) {
+        std::cerr << "\n\n" << strerror(errno) << ": failed to bind port to socket\n";
+        return 1;
+    }
+
+    int listen_status = ::listen(socket_file_descriptor, Constants::backlog);
+    if (listen_status == -1) {
+        std::cerr << "\n\n" << strerror(errno) << ": issue trying to call listen()\n";
+        return 1;
+    }
+
+    return socket_file_descriptor;
 }
