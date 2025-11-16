@@ -1,4 +1,4 @@
-#include "../include/ThreadPool.h"
+#include "../include/HttpServer.h"
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -22,23 +22,23 @@ size_t method_hash(std::string_view method) {
     return hash;
 }
 
-ThreadPool::ThreadPool() {
+HttpServer::HttpServer() {
     for (int i = 0; i < Constants::max_worker_count; i++) {
-        threads.emplace_back(&ThreadPool::handle_client, this);
+        threads.emplace_back(&HttpServer::handle_client, this);
     }
 }
 
-void ThreadPool::listen(std::string port) {}
+void HttpServer::listen(std::string port) {}
 
-void ThreadPool::get_mapping(std::string route, const Handler& fn) {
+void HttpServer::get_mapping(std::string route, const Handler& fn) {
     get_routes[route] = fn;
 }
 
-void ThreadPool::store_conn_fd(int conn_fd) {
+void HttpServer::store_conn_fd(int conn_fd) {
     queue.push(conn_fd);
  }
 
-void ThreadPool::handle_client() {
+void HttpServer::handle_client() {
     while (true) {
         // Read the incoming HTTP request
         char request_buffer[4096];

@@ -8,8 +8,8 @@ project(${TARGET}
 
 add_executable(${TARGET}
     src/main.cpp
-    src/ThreadPool.cpp
-    include/ThreadPool.h
+    src/HttpServer.cpp
+    include/HttpServer.h
     include/AtomicQueue.h
     include/constants.h)
 

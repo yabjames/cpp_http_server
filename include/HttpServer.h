@@ -8,9 +8,9 @@
 #include "constants.h"
 #include "../include/AtomicQueue.h"
 
-class ThreadPool {
+class HttpServer {
 public:
-    ThreadPool();
+    HttpServer();
 
     enum Method {
         GET,
