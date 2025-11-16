@@ -11,8 +11,6 @@
 #include "../include/constants.h"
 #include "../include/ThreadPool.h"
 
-// TODO: store functions in get_routes before creating a listen
-
 /*
  * @brief return a listener socket file descriptor
  */
@@ -81,10 +79,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     ThreadPool thread_pool {};
-
-    thread_pool.get_mapping("/test", [](const ThreadPool::Request&, ThreadPool::Response& res){
-        res.body = "testing new api route";
-    });
 
     while (1) {
         struct sockaddr_storage incoming_addr {};
