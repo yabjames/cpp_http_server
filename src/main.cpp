@@ -11,8 +11,6 @@
 #include "../include/constants.h"
 #include "../include/HttpServer.h"
 
-// TODO: store functions in get_routes before creating a listen
-
 /*
  * @brief return a listener socket file descriptor
  */

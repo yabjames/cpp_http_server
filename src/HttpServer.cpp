@@ -4,7 +4,6 @@
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <utility>
 
 constexpr size_t compile_time_method_hash(std::string_view method) {
     size_t hash = 0;
