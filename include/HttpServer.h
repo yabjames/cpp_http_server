@@ -42,12 +42,17 @@ public:
 
     void store_conn_fd(int conn_fd);
 
-    void listen(std::string port);
+    void listen(int port);
 
 private:
     AtomicQueue<int> queue;
     std::vector<std::thread> threads;
     std::unordered_map<std::string, Handler> get_routes;
+
+    /*
+     * @brief return a listener socket file descriptor
+     */
+    int get_listener_socket(int port);
 
     /**
         * @brief Should be passed into a thread() worker to send a response back to an HTTP client.
