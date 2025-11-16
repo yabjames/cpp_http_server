@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include <sys/resource.h>
 #include "../include/constants.h"
-#include "../include/ThreadPool.h"
+#include "../include/HttpServer.h"
 
 /*
  * @brief return a listener socket file descriptor
@@ -78,7 +78,11 @@ int main(int argc, char *argv[]) {
         std::cerr << "unable to obtain listener socket, exiting\n";
         return 1;
     }
-    ThreadPool thread_pool {};
+    HttpServer thread_pool {};
+
+    thread_pool.get_mapping("/test", [](const HttpServer::Request&, HttpServer::Response& res){
+        res.body = "testing new api route";
+    });
 
     while (1) {
         struct sockaddr_storage incoming_addr {};
