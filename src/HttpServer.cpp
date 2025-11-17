@@ -1,4 +1,5 @@
 #include "../include/HttpServer.h"
+#include "../include/constants.h"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -54,6 +55,10 @@ void HttpServer::get_mapping(std::string route, const Handler& fn) {
     get_routes[route] = fn;
 }
 
+void HttpServer::post_mapping(std::string route, const Handler& fn) {
+    post_routes[route] = fn;
+}
+
 void HttpServer::store_conn_fd(int conn_fd) {
     queue.push(conn_fd);
  }
@@ -79,48 +84,60 @@ void HttpServer::handle_client() {
         std::string_view request {request_buffer};
 
         // find the method
-        size_t methodItr = request.find(' ');
-        if (methodItr == std::string_view::npos) {
+        size_t method_itr = request.find(' ');
+        if (method_itr == std::string_view::npos) {
             close(conn_fd);
             std::cerr << "Invalid request formatting: no spaces\n";
             continue;
         }
 
         // check for valid method
-        std::string_view method = request.substr(0, methodItr);
+        std::string_view method = request.substr(0, method_itr);
         std::cout << "method: " << method << '\n';
 
         // get the route which is the second word
-        size_t routeStart = methodItr + 1;
-        size_t routeEnd = request.find(' ', routeStart);
-        if (routeEnd == std::string_view::npos) {
+        size_t route_start = method_itr + 1;
+        size_t route_end = request.find(' ', route_start);
+        if (route_end == std::string_view::npos) {
             close(conn_fd);
             std::cerr << "Invalid request formatting: no valid route\n";
             continue;
         }
 
-        std::string_view route = request.substr(routeStart, routeEnd - routeStart);
+        std::string_view route = request.substr(route_start, route_end - route_start);
         std::cout << "route: " << route << '\n';
 
         // get body
+        size_t req_body_start = request.find("\r\n\r\n") + 4;
+        if (req_body_start == std::string_view::npos) {
+            close (conn_fd);
+            std::cerr << "Invalid request formatting: the start of the request body is malformed\n";
+        }
+
+        std::string_view req_body = request.substr(req_body_start, request.size() - req_body_start);
+        std::cout << "body: " << req_body << '\n';
 
         // TODO: create a map that has a key route and function pointer
 
         Response res {};
         switch (method_hash(method)) {
-            case compile_time_method_hash("GET"): {
-                std::cout << "SLDKFJLSDKSFJ";
+            case compile_time_method_hash("GET"):
                 // check get_mappings
                 for (std::pair<std::string, Handler> route_pair : get_routes) {
-                    const Request req = { std::string(request), "", Method::GET};
-                    // run the mapping if the route is correct
+                    const Request req { std::string(route), "" };
                     if (route == route_pair.first) {
                         route_pair.second(req, res);
                     }
                 }
-            }
                 break;
             case compile_time_method_hash("POST"):
+                for (std::pair<std::string, Handler> route_pair : post_routes) {
+                    const Request req { std::string(request), std::string(req_body)};
+                    if (route == route_pair.first) {
+                        route_pair.second(req, res);
+                    }
+                }
+                break;
             case compile_time_method_hash("PUT"):
             case compile_time_method_hash("PATCH"):
             case compile_time_method_hash("DELETE"):

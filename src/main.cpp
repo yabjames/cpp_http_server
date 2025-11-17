@@ -12,5 +12,9 @@ int main() {
         res.body = "this is the other route";
     });
 
+    server.post_mapping("/post", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "post api route: " + req.body;
+    });
+
     server.listen(3490);
 }
