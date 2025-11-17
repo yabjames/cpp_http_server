@@ -1,11 +1,8 @@
 #pragma once
 
-#include <array>
 #include <functional>
 #include <thread>
-#include <semaphore>
 #include <vector>
-#include "constants.h"
 #include "../include/AtomicQueue.h"
 
 class HttpServer {
@@ -27,7 +24,6 @@ public:
     struct Request {
         std::string route;
         std::string body;
-        Method method;
     };
 
     struct Response {
@@ -40,6 +36,8 @@ public:
 
     void get_mapping(std::string route, const Handler& fn);
 
+    void post_mapping(std::string route, const Handler& fn);
+
     void store_conn_fd(int conn_fd);
 
     void listen(int port);
@@ -48,6 +46,7 @@ private:
     AtomicQueue<int> queue;
     std::vector<std::thread> threads;
     std::unordered_map<std::string, Handler> get_routes;
+    std::unordered_map<std::string, Handler> post_routes;
 
     /*
      * @brief return a listener socket file descriptor
