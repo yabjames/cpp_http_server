@@ -115,7 +115,12 @@ void HttpServer::handle_client() {
 
         Response res {};
         switch (method_hash(method)) {
-            case compile_time_method_hash("GET"): {
+            case compile_time_method_hash("GET"):
+            case compile_time_method_hash("DELETE"):
+            case compile_time_method_hash("HEAD"):
+            case compile_time_method_hash("OPTIONS"):
+            case compile_time_method_hash("CONNECT"):
+            case compile_time_method_hash("TRACE"): {
                 const Request req { request, ""};
                 Handler route_fn = routes[method][route];
                 route_fn(req, res);
@@ -123,12 +128,7 @@ void HttpServer::handle_client() {
             }
             case compile_time_method_hash("POST"):
             case compile_time_method_hash("PUT"):
-            case compile_time_method_hash("PATCH"):
-            case compile_time_method_hash("DELETE"):
-            case compile_time_method_hash("HEAD"):
-            case compile_time_method_hash("OPTIONS"):
-            case compile_time_method_hash("CONNECT"):
-            case compile_time_method_hash("TRACE"): {
+            case compile_time_method_hash("PATCH"): {
                 const Request req { request, std::string(req_body)};
                 Handler route_fn = routes[method][route];
                 route_fn(req, res);
