@@ -75,10 +75,10 @@ void HttpServer::handle_client() {
         }
         request_buffer[bytes_read] = '\0';  // Null-terminate for safety
 
-        std::string_view request {request_buffer};
+        std::string_view path {request_buffer};
 
         // find the method
-        size_t method_itr = request.find(' ');
+        size_t method_itr = path.find(' ');
         if (method_itr == std::string_view::npos) {
             close(conn_fd);
             std::cerr << "Invalid request formatting: no spaces\n";
@@ -86,29 +86,29 @@ void HttpServer::handle_client() {
         }
 
         // check for valid method
-        std::string_view method = request.substr(0, method_itr);
+        std::string_view method = path.substr(0, method_itr);
         std::cout << "method: " << method << '\n';
 
         // get the route which is the second word
         size_t route_start = method_itr + 1;
-        size_t route_end = request.find(' ', route_start);
+        size_t route_end = path.find(' ', route_start);
         if (route_end == std::string_view::npos) {
             close(conn_fd);
             std::cerr << "Invalid request formatting: no valid route\n";
             continue;
         }
 
-        std::string_view route = request.substr(route_start, route_end - route_start);
+        std::string_view route = path.substr(route_start, route_end - route_start);
         std::cout << "route: " << route << '\n';
 
         // get body
-        size_t req_body_start = request.find("\r\n\r\n") + 4;
+        size_t req_body_start = path.find("\r\n\r\n") + 4;
         if (req_body_start == std::string_view::npos) {
             close (conn_fd);
             std::cerr << "Invalid request formatting: the start of the request body is malformed\n";
         }
 
-        std::string_view req_body = request.substr(req_body_start, request.size() - req_body_start);
+        std::string_view req_body = path.substr(req_body_start, path.size() - req_body_start);
         std::cout << "body: " << req_body << '\n';
 
         // TODO: create a map that has a key route and function pointer
@@ -121,7 +121,7 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("OPTIONS"):
             case compile_time_method_hash("CONNECT"):
             case compile_time_method_hash("TRACE"): {
-                const Request req { request, ""};
+                const Request req { path, ""};
                 Handler route_fn = routes[method][route];
                 route_fn(req, res);
                 break;
@@ -129,7 +129,7 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("POST"):
             case compile_time_method_hash("PUT"):
             case compile_time_method_hash("PATCH"): {
-                const Request req { request, std::string(req_body)};
+                const Request req { path, std::string(req_body)};
                 Handler route_fn = routes[method][route];
                 route_fn(req, res);
                 break;
