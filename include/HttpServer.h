@@ -9,18 +9,6 @@ class HttpServer {
 public:
     HttpServer();
 
-    enum Method {
-        GET,
-        POST,
-        PUT,
-        PATCH,
-        DELETE,
-        HEAD,
-        OPTIONS,
-        CONNECT,
-        TRACE
-    };
-
     struct Request {
         std::string_view route;
         std::string body;
@@ -59,8 +47,6 @@ public:
 private:
     AtomicQueue<int> queue;
     std::vector<std::thread> threads;
-    std::unordered_map<std::string, Handler> get_routes;
-    std::unordered_map<std::string, Handler> post_routes;
 
     std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
 
