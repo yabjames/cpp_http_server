@@ -40,15 +40,16 @@ public:
 
     void trace_mapping(std::string_view route, const Handler& fn);
 
-    void store_conn_fd(int conn_fd);
-
     void listen(int port);
 
 private:
     AtomicQueue<int> queue;
+
     std::vector<std::thread> threads;
 
     std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
+
+    void store_conn_fd(int conn_fd);
 
     /*
      * @brief return a listener socket file descriptor
