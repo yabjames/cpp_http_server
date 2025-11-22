@@ -9,44 +9,47 @@ class HttpServer {
 public:
     HttpServer();
 
-    enum Method {
-        GET,
-        POST,
-        PUT,
-        PATCH,
-        DELETE,
-        HEAD,
-        OPTIONS,
-        CONNECT,
-        TRACE
-    };
-
     struct Request {
-        std::string route;
+        std::string_view route;
         std::string body;
     };
 
     struct Response {
-        std::string header;
+        std::string_view header;
         std::string body;
         int status;
     };
 
     using Handler = std::function<void(const Request&, Response&)>;
 
-    void get_mapping(std::string route, const Handler& fn);
+    void get_mapping(std::string_view route, const Handler& fn);
 
-    void post_mapping(std::string route, const Handler& fn);
+    void post_mapping(std::string_view route, const Handler& fn);
 
-    void store_conn_fd(int conn_fd);
+    void put_mapping(std::string_view route, const Handler& fn);
+
+    void patch_mapping(std::string_view route, const Handler& fn);
+
+    void delete_mapping(std::string_view route, const Handler& fn);
+
+    void head_mapping(std::string_view route, const Handler& fn);
+
+    void options_mapping(std::string_view route, const Handler& fn);
+
+    void connect_mapping(std::string_view route, const Handler& fn);
+
+    void trace_mapping(std::string_view route, const Handler& fn);
 
     void listen(int port);
 
 private:
     AtomicQueue<int> queue;
+
     std::vector<std::thread> threads;
-    std::unordered_map<std::string, Handler> get_routes;
-    std::unordered_map<std::string, Handler> post_routes;
+
+    std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
+
+    void store_conn_fd(int conn_fd);
 
     /*
      * @brief return a listener socket file descriptor
