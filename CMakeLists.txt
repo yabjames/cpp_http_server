@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.31)
 set(TARGET "http_server")
 project(${TARGET}
     VERSION 1.0
