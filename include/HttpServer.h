@@ -3,6 +3,8 @@
 #include <functional>
 #include <thread>
 #include <vector>
+#include <string>
+#include <string_view>
 #include "../include/AtomicQueue.h"
 
 class HttpServer {
