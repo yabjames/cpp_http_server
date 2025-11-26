@@ -114,6 +114,7 @@ void HttpServer::handle_client() {
         // TODO: create a map that has a key route and function pointer
 
         Response res {};
+        std::string response {};
         switch (method_hash(method)) {
             case compile_time_method_hash("GET"):
             case compile_time_method_hash("DELETE"):
@@ -122,8 +123,24 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("CONNECT"):
             case compile_time_method_hash("TRACE"): {
                 const Request req { path, ""};
-                Handler route_fn = routes[method][route];
-                route_fn(req, res);
+                if (routes[method].find(route) != routes[method].end()) {
+                    Handler route_fn = routes[method][route];
+                    route_fn(req, res);
+                    response =
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
+                        "Connection: close\r\n"
+                        "\r\n" +
+                        std::string(res.body);
+                } else {
+                    res.body = "{\"error\": \"The requested API route does not exist\"}";
+                    response =
+                        "HTTP/1.1 404 Not Found\r\n"
+                        "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
+                        "Connection: close\r\n"
+                        "\r\n" +
+                        std::string(res.body);
+                }
                 break;
             }
             case compile_time_method_hash("POST"):
@@ -131,38 +148,38 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("PATCH"): {
                 const Request req { path, std::string(req_body)};
                 Handler route_fn = routes[method][route];
-                route_fn(req, res);
+                if (routes[method].find(route) != routes[method].end()) {
+                    Handler route_fn = routes[method][route];
+                    route_fn(req, res);
+                    response =
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
+                        "Connection: close\r\n"
+                        "\r\n" +
+                        std::string(res.body);
+                } else {
+                    res.body = "{\"error\": \"The requested endpoint does not exist\"}";
+                    response =
+                        "HTTP/1.1 404 Not Found\r\n"
+                        "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
+                        "Connection: close\r\n"
+                        "\r\n" +
+                        std::string(res.body);
+                }
                 break;
             }
             default: {
-                // TODO: throw an exeption here
-                std::cout <<"default method\n";
-                const char *response=
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Length: 0\r\n"
-                "Connection: close\r\n"
-                "\r\n";
+                res.body = "{\"error\": \"The request does not have a valid HTTP method\"}";
+                response =
+                    "HTTP/1.1 500 Error\r\n"
+                    "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
+                    "Connection: close\r\n"
+                    "\r\n" +
+                    std::string(res.body);
 
-                int bytes_sent = send(conn_fd, response, strlen(response), 0);
-                if (bytes_sent == -1) {
-                    close(conn_fd);
-                    std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
-                    continue;
-                }
                 std::cout << request_buffer << "\n";
-
-                close(conn_fd);
-                continue;
             }
         }
-
-        const std::string response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
-        "Connection: close\r\n"
-        "\r\n" +
-        std::string(res.body);
-
         int bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
         if (bytes_sent == -1) {
             close(conn_fd);
@@ -171,7 +188,6 @@ void HttpServer::handle_client() {
         }
         std::cout << request_buffer << "\n";
         close(conn_fd);
-
     }
     std::cout << "thread ending\n";
 }
