@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.31)
+
 set(TARGET "http_server")
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(${TARGET}
     VERSION 1.0
     LANGUAGES CXX)
@@ -12,14 +15,15 @@ add_executable(${TARGET}
     include/HttpServer.h
     include/AtomicQueue.h
     include/constants.h
+    test/get-listener-socket-unittest.cpp
 )
 
 target_link_libraries(${TARGET}
-    gtest::gtest
+    GTest::gtest_main
 )
 
 include(GoogleTest)
-# gtest_discover_tests(${TARGET})
+gtest_discover_tests(${TARGET})
 
 target_compile_features(${TARGET} PRIVATE cxx_std_17)
 
