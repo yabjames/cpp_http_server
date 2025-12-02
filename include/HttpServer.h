@@ -4,12 +4,17 @@
 #include <thread>
 #include <vector>
 #include <string>
+#include <atomic>
 #include <string_view>
 #include "../include/AtomicQueue.h"
 
 class HttpServer {
 public:
     HttpServer();
+
+    ~HttpServer();
+
+    std::atomic<bool> stop_flag;
 
     struct Request {
         std::string_view route;

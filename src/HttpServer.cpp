@@ -26,8 +26,17 @@ size_t method_hash(std::string_view method) {
 }
 
 HttpServer::HttpServer() {
+    stop_flag.store(false);
     for (int i = 0; i < Constants::max_worker_count; i++) {
         threads.emplace_back(&HttpServer::handle_client, this);
+    }
+}
+
+HttpServer::~HttpServer() {
+    stop_flag.store(true);
+    for (int i = 0; i < Constants::max_worker_count; i++) {
+        threads[i].join();
+        std::cout << "RIP thread " << i << "\n";
     }
 }
 
@@ -37,7 +46,7 @@ void HttpServer::listen(int port) {
         std::cerr << "unable to obtain listener socket, exiting\n";
         std::exit(EXIT_FAILURE);
     }
-    while (1) {
+    while (!stop_flag.load()) {
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
@@ -58,18 +67,23 @@ void HttpServer::store_conn_fd(int conn_fd) {
  }
 
 void HttpServer::handle_client() {
-    while (true) {
+    while (!stop_flag.load()) {
+        std::cout << "running\n";
         // Read the incoming HTTP request
         char request_buffer[4096];
         int conn_fd {};
 
         // if queue is empty
-        if (!queue.pop(conn_fd)) continue;
+        if (!queue.pop(conn_fd, stop_flag)) {
+            if (stop_flag.load()) break;
+            continue;
+        } 
 
         ssize_t bytes_read = recv(conn_fd, request_buffer, sizeof(request_buffer) - 1, 0);
 
         if (bytes_read <= 0) {
             close(conn_fd);
+            if (stop_flag.load()) break;
             std::cerr << "Invalid request formatting: 0 bytes read\n";
             continue;
         }
