@@ -47,7 +47,21 @@ public:
 
     void trace_mapping(std::string_view route, const Handler& fn);
 
+    /**
+     * Tells the server to start listening/accepting requests from a specified port. This function is blocking.
+     */
     void listen(int port);
+
+    /**
+     * Initializes a thread to start listening/accepting requests from a specified port. This function is non-blocking,
+     * so only use one active `listen()` or `start_listening()` method call for any given time.
+     */
+    void start_listening(int port);
+
+    /**
+     * Tells the server to stop listening/accepting requests.
+     */
+    void stop_listening();
 
 private:
     AtomicQueue<int> queue;
@@ -57,6 +71,8 @@ private:
     std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
 
     void store_conn_fd(int conn_fd);
+
+    int listener_fd {-1};
 
     /*
      * @brief return a listener socket file descriptor

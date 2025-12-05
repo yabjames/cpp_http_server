@@ -33,32 +33,63 @@ HttpServer::HttpServer() {
 }
 
 HttpServer::~HttpServer() {
-    stop_flag.store(true);
-    for (int i = 0; i < Constants::max_worker_count; i++) {
+    this->stop_listening();
+    for (int i = 0; i < threads.size(); i++) {
         threads[i].join();
-        std::cout << "RIP thread " << i << "\n";
+        std::cout << "thread removed: " << i << "\n";
     }
+    threads.clear();
 }
 
 void HttpServer::listen(int port) {
-    int listener_file_descriptor = get_listener_socket(port);
-    if (listener_file_descriptor < 0) {
+    listener_fd = get_listener_socket(port);
+    if (listener_fd < 0) {
         std::cerr << "unable to obtain listener socket, exiting\n";
         std::exit(EXIT_FAILURE);
     }
+
+    std::cout << "server listening now...\n";
     while (!stop_flag.load()) {
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
-        int conn_file_descriptor = accept(listener_file_descriptor, (struct sockaddr*)&incoming_addr, &addr_size);
+        int conn_file_descriptor = accept(listener_fd, (struct sockaddr*)&incoming_addr, &addr_size);
         if (conn_file_descriptor == -1) {
+            // If we're stopping, accept failures are expected; don't spam logs.
+            if (stop_flag.load()) break;
+
+            // Interrupted system call - retry.
+            if (errno == EINTR) continue;
+
+            // If socket was closed or not valid, stop the loop quietly.
+            if (errno == EBADF || errno == EINVAL || errno == EOPNOTSUPP) break;
+
+            // Otherwise log and continue or break as appropriate.
             std::cerr << strerror(errno) << ": issue trying to accept incoming connection\n";
-            break;
+            continue;
         }
         this->store_conn_fd(conn_file_descriptor);
     }
 
-    close(listener_file_descriptor);
+    if (listener_fd != -1) {
+        close(listener_fd);
+        listener_fd = -1;
+    }
+}
+
+void HttpServer::start_listening(int port) {
+    threads.emplace_back(&HttpServer::listen, this, port);
+}
+
+void HttpServer::stop_listening() {
+    stop_flag.store(true);
+
+    if (listener_fd != -1) {
+        shutdown(listener_fd, SHUT_RDWR); // interrupt the accept()
+        close(listener_fd);
+        listener_fd = -1;
+    }
+    std::cout << "stopped listening\n";
 }
 
 
@@ -68,22 +99,21 @@ void HttpServer::store_conn_fd(int conn_fd) {
 
 void HttpServer::handle_client() {
     while (!stop_flag.load()) {
-        std::cout << "running\n";
         // Read the incoming HTTP request
         char request_buffer[4096];
         int conn_fd {};
 
         // if queue is empty
         if (!queue.pop(conn_fd, stop_flag)) {
-            if (stop_flag.load()) break;
+            if (stop_flag.load()) return;
             continue;
-        } 
+        }
 
         ssize_t bytes_read = recv(conn_fd, request_buffer, sizeof(request_buffer) - 1, 0);
 
         if (bytes_read <= 0) {
             close(conn_fd);
-            if (stop_flag.load()) break;
+            if (stop_flag.load()) return;
             std::cerr << "Invalid request formatting: 0 bytes read\n";
             continue;
         }
@@ -203,7 +233,6 @@ void HttpServer::handle_client() {
         std::cout << request_buffer << "\n";
         close(conn_fd);
     }
-    std::cout << "thread ending\n";
 }
 
 int HttpServer::get_listener_socket(int port) {
