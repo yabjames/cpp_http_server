@@ -25,7 +25,7 @@ add_executable(${TARGET}
 target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
 
 # unit tests executable
-add_executable(${TEST_TARGET} test/get-listener-socket-unittest.cpp)
+add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
 target_link_libraries(${TEST_TARGET}
     PRIVATE
     ${LIBRARY}
