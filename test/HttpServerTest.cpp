@@ -49,7 +49,7 @@ TEST(HttpServerTest, AcceptsHttpRequest) {
 }
 
 TEST(HttpServerTest, AcceptGetRequest) {
-    HttpServer server;
+    HttpServer server {};
     server.get_mapping("/hello", [](const HttpServer::Request&, HttpServer::Response& res){
         res.body = "hello, world";
     });
@@ -74,6 +74,72 @@ TEST(HttpServerTest, AcceptGetRequest) {
     std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);
+    ASSERT_TRUE(result.find("hello, world") != std::string::npos);
+
+    close(sock);
+}
+
+TEST(HttpServerTest, IgnoreGetReqBody) {
+    HttpServer server {};
+    server.get_mapping("/hello", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = req.body;
+    });
+    server.start_listening(8082);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8082);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+
+    const char* request = "GET /hello HTTP/1.1\r\n\r\nhello, world";
+    send(sock, request, strlen(request), 0);
+
+    char buffer[1024] {};
+    int bytes = recv(sock, buffer, sizeof(buffer), 0);
+    std::string result = std::string(buffer);
+
+    EXPECT_GT(bytes, 0);
+
+    // Should not find "hello, world" as setting the request body is ignored
+    ASSERT_FALSE(result.find("hello, world") != std::string::npos);
+
+    close(sock);
+}
+
+TEST(HttpServerTest, DoesntIgnorePostReqBody) {
+    HttpServer server {};
+    server.post_mapping("/post-foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = req.body;
+    });
+    server.start_listening(8082);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8082);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+
+    const char* request = "POST /post-foo HTTP/1.1\r\n\r\nhello, world";
+    send(sock, request, strlen(request), 0);
+
+    char buffer[1024] {};
+    int bytes = recv(sock, buffer, sizeof(buffer), 0);
+    std::string result = std::string(buffer);
+
+    EXPECT_GT(bytes, 0);
+
+    // Should find "hello, world" as setting the request body
     ASSERT_TRUE(result.find("hello, world") != std::string::npos);
 
     close(sock);
