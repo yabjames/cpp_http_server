@@ -144,3 +144,66 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
 
     close(sock);
 }
+
+TEST(HttpServerTest, AllUniqueReqMethods) {
+    // this will test all different http methods with the same route name
+    HttpServer server {};
+
+    server.get_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "0";
+    });
+    server.post_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "1";
+    });
+    server.put_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "2";
+    });
+    server.patch_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "3";
+    });
+    server.options_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "4";
+    });
+    server.head_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "5";
+    });
+    server.delete_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "6";
+    });
+    server.connect_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "7";
+    });
+    server.trace_mapping("/foo", [](const HttpServer::Request& req, HttpServer::Response& res){
+        res.body = "8";
+    });
+
+    server.start_listening(8083);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8083);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    const std::string methods[9] = { "GET", "POST", "PUT", "PATCH", "OPTIONS", "HEAD", "DELETE", "CONNECT", "TRACE" };
+    for (int i = 0; i < 9; i++) {
+        std::string request = methods[i] + " /foo HTTP/1.1\r\n"
+            "Host: localhost\r\n"
+            "Connection: keep-alive\r\n"
+            "Content-Length: 0\r\n"
+            "\r\n";
+
+        int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
+        ASSERT_EQ(connect(listener_fd, (sockaddr*)&addr, sizeof(addr)), 0);
+        send(listener_fd, request.c_str(), request.size(), 0);
+
+        char buffer[1024] {};
+        int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+        std::string result = std::string(buffer);
+
+        EXPECT_GT(bytes, 0);
+        ASSERT_TRUE(result.find(std::to_string(i)) != std::string::npos);
+        ASSERT_TRUE(close(listener_fd) != -1);
+    }
+}
