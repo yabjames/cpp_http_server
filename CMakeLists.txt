@@ -6,7 +6,7 @@ set(TEST_TARGET "server_tests_bin")
 set(TARGET "server_impl_bin")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(GTest REQUIRED)
+option(ENABLE_TESTS "Build unit and integration tests" ON)
 
 # server library
 add_library(${LIBRARY}
@@ -18,18 +18,24 @@ add_library(${LIBRARY}
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)
 
+# unit tests executable
+if (ENABLE_TESTS)
+    find_package(GTest REQUIRED)
+    add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
+    target_link_libraries(${TEST_TARGET}
+        PRIVATE
+        ${LIBRARY}
+        GTest::gtest_main
+    )
+    include(GoogleTest)
+    gtest_discover_tests(${TEST_TARGET})
+    target_compile_options(${TEST_TARGET} PRIVATE -g)
+    return()
+endif()
+
 # server implementation executable
 add_executable(${TARGET}
     src/main.cpp
 )
 target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
 
-# unit tests executable
-add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
-target_link_libraries(${TEST_TARGET}
-    PRIVATE
-    ${LIBRARY}
-    GTest::gtest_main
-)
-include(GoogleTest)
-gtest_discover_tests(${TEST_TARGET})
