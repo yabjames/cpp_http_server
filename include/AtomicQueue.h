@@ -23,11 +23,18 @@ public:
         cond_var.notify_one();
     }
 
-    bool pop(T& result) {
+    bool pop(T& result, const std::atomic<bool>& stop_flag) {
         std::unique_lock<std::mutex> lock(mutex);
 
         // when notified and if queue not empty, then proceed
-        cond_var.wait(lock, [this]{ return !queue.empty(); });
+        // if the stop_flag is true, then it will instantly return from the pop()
+        while (queue.empty()) {
+            if (stop_flag.load()) {
+                return false;
+            }
+            cond_var.wait_for(lock, std::chrono::milliseconds(100));
+        }
+
         result = queue.front();
         queue.pop();
 
