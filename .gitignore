@@ -1,3 +1,9 @@
 build/
+.venv/
 a.out
 CMakeUserPresets.json
+
+# cache
+.idea/
+.zed/
+.vscode/
