@@ -6,8 +6,6 @@ set(TEST_TARGET "server_tests_bin")
 set(TARGET "server_impl_bin")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(ENABLE_TESTS "Build unit and integration tests" ON)
-
 # server library
 add_library(${LIBRARY}
     src/HttpServer.cpp
@@ -17,12 +15,12 @@ add_library(${LIBRARY}
 )
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)
-if (ENABLE_TESTS)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     target_compile_options(${LIBRARY} PRIVATE -O0 -g --coverage)
 endif()
 
 # unit tests executable
-if (ENABLE_TESTS)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     enable_testing()
     find_package(GTest REQUIRED)
     add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
@@ -34,8 +32,6 @@ if (ENABLE_TESTS)
     gtest_discover_tests(${TEST_TARGET})
     target_compile_options(${TEST_TARGET} PRIVATE -g -O0 -g --coverage)
     target_link_options(${TEST_TARGET} PRIVATE -O0 -g --coverage)
-
-    return()
 endif()
 
 # server implementation executable
@@ -43,3 +39,7 @@ add_executable(${TARGET}
     src/main.cpp
 )
 target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    target_compile_options(${TARGET} PRIVATE -g -O0 -g --coverage)
+    target_link_options(${TARGET} PRIVATE -O0 -g --coverage)
+endif()
