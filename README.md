@@ -2,44 +2,29 @@
 
 ### Building for Release mode
 ```bash
-conan build .
-cd build/Release/generators
-cmake ../../.. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+conan build . --build=missing
+cmake -S . -B build/Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 
 # runs the underlying build system (Makefiles, VStudio solution files)
-cmake --build . 
-```
-
-### Building for Debug mode
-```bash
-conan build .
-cd build/Debug/generators
-cmake ../../.. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
-
-# runs the underlying build system (Makefiles, VStudio solution files)
-cmake --build . 
+cmake --build build/Release
 ```
 
 ## Command to run the HttpServer impl example
 ```bash
 # in release mode
 ./build/Release/server_impl_bin
-
-# in debug mode
-./build/Debug/server_impl_bin
 ```
 
 ## Command to run the Tests
 ```bash
 # run tests
-./build/Debug/server_test_bin
+./build/Release/server_test_bin
 ```
 
 ## Generation of coverage reports
 
 ```bash
-cd build/Debug/generators \
-&& cmake --build . \
+cmake --build build/Release \
 && ctest \
 && cd CMakeFiles/server_library.dir/src \
 && gcov HttpServer.cpp.gcno \
