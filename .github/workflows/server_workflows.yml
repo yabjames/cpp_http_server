@@ -34,9 +34,9 @@ jobs:
           cd build/Release
           make coverage
 
-      - name: Coveralls
-        if: ${{ github.actor != 'nektos/act' }}
-        uses: coverallsapp/github-action@master
+      - name: Report Code Coverage
+        uses: zgosalvez/github-actions-report-lcov@v4
         with:
-          path-to-lcov: build/Release/CMakeFiles/server_library.dir/src/coverage.info
+          coverage-files: build/Release/CMakeFiles/server_library.dir/src/coverage.info
+          artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
