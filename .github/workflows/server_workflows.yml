@@ -8,27 +8,36 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
+    permissions: write-all
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Apt update
+      - name: Install required apt packages
         run: |
           sudo apt update
-          sudo apt install -y cmake
+          sudo apt install -y cmake lcov make
 
-      - name: Install Conan
-        run: pip3 install conan
+      - name: Setup Conan Client
+        uses: conan-io/setup-conan@v1
+        with:
+          conan_audit_token: ${{ secrets.CONAN_AUDIT_TOKEN }}
 
-      - name: Configure Conan Packages
+      - name: Install Conan dependencies
+        run: conan build . --build=missing
+
+      - name: Run GTest
+        run: ctest --test-dir build/Release
+
+      - name: Coverage
+        shell: bash
         run: |
-          conan profile detect --force
-          conan install . --build=missing
+          cd build/Release
+          make coverage
 
-      - name: CMake Configure
-        run: cmake -S . -B build/Release -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
-
-      - name: CMake Build
-        run: cmake --build build/Release
-
-      - name: Run tests
-        run: ./build/Release/server_tests_bin
+      - name: Report Code Coverage
+        uses: zgosalvez/github-actions-report-lcov@v4
+        with:
+          coverage-files: build/Release/CMakeFiles/server_library.dir/src/coverage.info
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
