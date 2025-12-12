@@ -12,10 +12,10 @@ find_package(Threads REQUIRED)
 
 # server library
 add_library(${LIBRARY}
-    src/HttpServer.cpp
-    include/HttpServer.h
-    include/AtomicQueue.h
-    include/constants.h
+        src/HttpServer.cpp
+        include/HttpServer.h
+        include/AtomicQueue.h
+        include/constants.h
 )
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)
@@ -27,7 +27,7 @@ target_link_libraries(${LIBRARY} PRIVATE Threads::Threads)
 enable_testing()
 add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
 target_link_libraries(${TEST_TARGET}
-    PRIVATE ${LIBRARY} GTest::gtest_main 
+        PRIVATE ${LIBRARY} GTest::gtest_main
 )
 
 include(GoogleTest)
@@ -38,8 +38,21 @@ target_link_options(${TEST_TARGET} PRIVATE -O0 -g --coverage)
 
 # server implementation executable
 add_executable(${TARGET}
-    src/main.cpp
+        src/main.cpp
 )
 target_compile_options(${TARGET} PRIVATE -g -O0 -g --coverage)
 target_link_options(${TARGET} PRIVATE -O0 -g --coverage)
 target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
+
+# coverage target
+# find required tools
+find_program(LCOV lcov REQUIRED)
+find_program(GENHTML genhtml REQUIRED)
+
+# add coverage target
+add_custom_target(coverage
+        # gather data
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeFiles/server_library.dir/src
+        COMMAND ${LCOV} -c -d . -o coverage.info
+        COMMAND ${GENHTML} coverage.info -o out
+)
