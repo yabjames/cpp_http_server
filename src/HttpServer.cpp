@@ -36,7 +36,7 @@ HttpServer::~HttpServer() {
     this->stop_listening();
     for (int i = 0; i < threads.size(); i++) {
         threads[i].join();
-        std::cout << "thread removed: " << i << "\n";
+        // std::cout << "thread removed: " << i << "\n";
     }
     threads.clear();
 }
@@ -89,7 +89,6 @@ void HttpServer::stop_listening() {
         close(listener_fd);
         listener_fd = -1;
     }
-    std::cout << "stopped listening\n";
 }
 
 
@@ -131,7 +130,7 @@ void HttpServer::handle_client() {
 
         // check for valid method
         std::string_view method = path.substr(0, method_itr);
-        std::cout << "method: " << method << '\n';
+        // std::cout << "method: " << method << '\n';
 
         // get the route which is the second word
         size_t route_start = method_itr + 1;
@@ -143,7 +142,7 @@ void HttpServer::handle_client() {
         }
 
         std::string_view route = path.substr(route_start, route_end - route_start);
-        std::cout << "route: " << route << '\n';
+        // std::cout << "route: " << route << '\n';
 
         // get body
         size_t req_body_start = path.find("\r\n\r\n") + 4;
@@ -153,7 +152,7 @@ void HttpServer::handle_client() {
         }
 
         std::string_view req_body = path.substr(req_body_start, path.size() - req_body_start);
-        std::cout << "body: " << req_body << '\n';
+        // std::cout << "body: " << req_body << '\n';
 
         // TODO: create a map that has a key route and function pointer
 
@@ -221,7 +220,7 @@ void HttpServer::handle_client() {
                     "\r\n" +
                     std::string(res.body);
 
-                std::cout << request_buffer << "\n";
+                // std::cout << request_buffer << "\n";
             }
         }
         int bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
@@ -230,7 +229,7 @@ void HttpServer::handle_client() {
             std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
             continue;
         }
-        std::cout << request_buffer << "\n";
+        // std::cout << request_buffer << "\n";
         close(conn_fd);
     }
 }
