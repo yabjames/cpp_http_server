@@ -44,8 +44,7 @@ HttpServer::~HttpServer() {
 void HttpServer::listen(int port) {
     listener_fd = get_listener_socket(port);
     if (listener_fd < 0) {
-        std::cerr << "unable to obtain listener socket, exiting\n";
-        std::exit(EXIT_FAILURE);
+        throw std::runtime_error("unable to obtain listener socket, exiting\n");
     }
 
     std::cout << "server listening now...\n";
@@ -65,8 +64,7 @@ void HttpServer::listen(int port) {
             if (errno == EBADF || errno == EINVAL || errno == EOPNOTSUPP) break;
 
             // Otherwise log and continue or break as appropriate.
-            std::cerr << strerror(errno) << ": issue trying to accept incoming connection\n";
-            continue;
+            throw std::runtime_error("unable to obtain a valid connection file descriptor, exiting\n");
         }
         this->store_conn_fd(conn_file_descriptor);
     }
@@ -248,8 +246,7 @@ int HttpServer::get_listener_socket(int port) {
 
     int status = getaddrinfo(Constants::hostname, port_str.c_str(), &hints, &results);
     if (status != 0) {
-        std::cerr << stderr << " gai error: " << gai_strerror(status) << '\n';
-        return 1;
+        throw std::runtime_error("gai error: " + std::string(gai_strerror(status)));
     }
 
     // find the first file descriptor that does not fail
@@ -264,14 +261,13 @@ int HttpServer::get_listener_socket(int port) {
         int yes = 1;
         int sockopt_status = setsockopt(socket_file_descriptor, SOL_SOCKET,SO_REUSEADDR, &yes, sizeof(int));
         if (sockopt_status == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue setting socket options\n";
-            return 1;
+            throw std::runtime_error(std::string(strerror(errno)) + ": issue setting socket options");
         }
 
         // associate the socket descriptor with the port passed into getaddrinfo()
         int bind_status = bind(socket_file_descriptor, addrinfo_ptr->ai_addr, addrinfo_ptr->ai_addrlen);
         if (bind_status == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port\n";
+            std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port";
             continue;
         }
 
@@ -281,14 +277,12 @@ int HttpServer::get_listener_socket(int port) {
     freeaddrinfo(results);
 
     if (addrinfo_ptr == nullptr) {
-        std::cerr << "\n\n" << strerror(errno) << ": failed to bind port to socket\n";
-        return 1;
+        throw std::runtime_error(std::string(strerror(errno)) + ": failed to bind port to socket");
     }
 
     int listen_status = ::listen(socket_file_descriptor, Constants::backlog);
     if (listen_status == -1) {
-        std::cerr << "\n\n" << strerror(errno) << ": issue trying to call listen()\n";
-        return 1;
+        throw std::runtime_error(std::string(strerror(errno)) + ": issue trying to call listen()");
     }
 
     return socket_file_descriptor;
