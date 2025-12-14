@@ -190,10 +190,11 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("PUT"):
             case compile_time_method_hash("PATCH"): {
                 const Request req { path, std::string(req_body)};
-                Handler route_fn = routes[method][route];
                 if (routes[method].find(route) != routes[method].end()) {
                     Handler route_fn = routes[method][route];
-                    route_fn(req, res);
+                    if (route_fn != nullptr) {
+                        route_fn(req, res);
+                    }
                     response =
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
