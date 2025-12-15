@@ -264,3 +264,37 @@ TEST(HttpServerTest, HandleNonExistentPostRoute) {
     ASSERT_TRUE(result.find("404 Not Found") != std::string::npos);
     ASSERT_TRUE(close(listener_fd) != -1);
 }
+
+TEST(HttpServerTest, HandleNonExistentHttpMethod) {
+    HttpServer server {};
+    server.start_listening(8084);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8084);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    std::string request = "FOO /foo HTTP/1.1\r\n";
+    // "Host: localhost\r\n"
+    // "Connection: keep-alive\r\n"
+    // "Content-Length: 0\r\n"
+    // "\r\n";
+
+    int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
+    ASSERT_EQ(connect(listener_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
+    send(listener_fd, request.c_str(), request.size(), 0);
+
+    char buffer[1024] {};
+    int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+    std::string result = std::string(buffer);
+
+    EXPECT_GT(bytes, 0);
+    ASSERT_TRUE(result.find("500 Error") != std::string::npos);
+    ASSERT_TRUE(close(listener_fd) != -1);
+}
+
+TEST(HttpServerTest, ListenThrowsIfSocketInvalid) {
+    HttpServer server {};
+    EXPECT_THROW(server.listen(-1), std::runtime_error);
+}
