@@ -79,7 +79,7 @@ TEST(HttpServerTest, IgnoreGetReqBody) {
     server.get_mapping("/hello", [](const HttpServer::Request& req, HttpServer::Response& res){
         res.body = req.body;
     });
-    server.start_listening(8082);
+    server.start_listening(8083);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
@@ -87,7 +87,7 @@ TEST(HttpServerTest, IgnoreGetReqBody) {
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8082);
+    addr.sin_port = htons(8083);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
@@ -112,7 +112,7 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
     server.post_mapping("/post-foo", [](const HttpServer::Request& req, HttpServer::Response& res){
         res.body = req.body;
     });
-    server.start_listening(8082);
+    server.start_listening(8084);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
@@ -120,7 +120,7 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8082);
+    addr.sin_port = htons(8084);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
@@ -172,13 +172,13 @@ TEST(HttpServerTest, AllUniqueReqMethods) {
         res.body = "8";
     });
 
-    server.start_listening(8083);
+    server.start_listening(8085);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8083);
+    addr.sin_port = htons(8085);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     const std::string methods[9] = { "GET", "POST", "PUT", "PATCH", "OPTIONS", "HEAD", "DELETE", "CONNECT", "TRACE" };
@@ -205,12 +205,12 @@ TEST(HttpServerTest, AllUniqueReqMethods) {
 
 TEST(HttpServerTest, HandleNonExistentGetRoute) {
     HttpServer server {};
-    server.start_listening(8083);
+    server.start_listening(8086);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8083);
+    addr.sin_port = htons(8086);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     std::string request = "GET /foo HTTP/1.1\r\n"
@@ -238,12 +238,12 @@ TEST(HttpServerTest, HandleNonExistentGetRoute) {
  */
 TEST(HttpServerTest, HandleNonExistentPostRoute) {
     HttpServer server {};
-    server.start_listening(8084);
+    server.start_listening(8087);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8084);
+    addr.sin_port = htons(8087);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     std::string request = "POST /foo HTTP/1.1\r\n";
@@ -267,12 +267,12 @@ TEST(HttpServerTest, HandleNonExistentPostRoute) {
 
 TEST(HttpServerTest, HandleNonExistentHttpMethod) {
     HttpServer server {};
-    server.start_listening(8084);
+    server.start_listening(8088);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8084);
+    addr.sin_port = htons(8088);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     std::string request = "FOO /foo HTTP/1.1\r\n";
