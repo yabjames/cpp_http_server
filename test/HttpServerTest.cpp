@@ -26,7 +26,7 @@ TEST(HttpServerTest, AcceptsHttpRequest) {
     addr.sin_port = htons(8081);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+    ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
 
     const char* request = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
         "Host: localhost\r\n"
@@ -59,7 +59,7 @@ TEST(HttpServerTest, AcceptGetRequest) {
     addr.sin_port = htons(8082);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+    ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
 
     const char* request = "GET /hello HTTP/1.1\r\n\r\n";
     send(sock, request, strlen(request), 0);
@@ -90,7 +90,7 @@ TEST(HttpServerTest, IgnoreGetReqBody) {
     addr.sin_port = htons(8083);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+    ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
 
     const char* request = "GET /hello HTTP/1.1\r\n\r\nhello, world";
     send(sock, request, strlen(request), 0);
@@ -123,7 +123,7 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
     addr.sin_port = htons(8084);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    ASSERT_EQ(connect(sock, (sockaddr*)&addr, sizeof(addr)), 0);
+    ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
 
     const char* request = "POST /post-foo HTTP/1.1\r\n\r\nhello, world";
     send(sock, request, strlen(request), 0);
