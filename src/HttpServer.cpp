@@ -36,7 +36,7 @@ HttpServer::~HttpServer() {
     this->stop_listening();
     for (int i = 0; i < threads.size(); i++) {
         threads[i].join();
-        std::cout << "thread removed: " << i << "\n";
+        // std::cout << "thread removed: " << i << "\n";
     }
     threads.clear();
 }
@@ -44,8 +44,7 @@ HttpServer::~HttpServer() {
 void HttpServer::listen(int port) {
     listener_fd = get_listener_socket(port);
     if (listener_fd < 0) {
-        std::cerr << "unable to obtain listener socket, exiting\n";
-        std::exit(EXIT_FAILURE);
+        throw std::runtime_error("unable to obtain listener socket, exiting\n");
     }
 
     std::cout << "server listening now...\n";
@@ -65,8 +64,7 @@ void HttpServer::listen(int port) {
             if (errno == EBADF || errno == EINVAL || errno == EOPNOTSUPP) break;
 
             // Otherwise log and continue or break as appropriate.
-            std::cerr << strerror(errno) << ": issue trying to accept incoming connection\n";
-            continue;
+            throw std::runtime_error("unable to obtain a valid connection file descriptor, exiting\n");
         }
         this->store_conn_fd(conn_file_descriptor);
     }
@@ -89,7 +87,6 @@ void HttpServer::stop_listening() {
         close(listener_fd);
         listener_fd = -1;
     }
-    std::cout << "stopped listening\n";
 }
 
 
@@ -131,7 +128,7 @@ void HttpServer::handle_client() {
 
         // check for valid method
         std::string_view method = path.substr(0, method_itr);
-        std::cout << "method: " << method << '\n';
+        // std::cout << "method: " << method << '\n';
 
         // get the route which is the second word
         size_t route_start = method_itr + 1;
@@ -143,7 +140,7 @@ void HttpServer::handle_client() {
         }
 
         std::string_view route = path.substr(route_start, route_end - route_start);
-        std::cout << "route: " << route << '\n';
+        // std::cout << "route: " << route << '\n';
 
         // get body
         size_t req_body_start = path.find("\r\n\r\n") + 4;
@@ -153,7 +150,7 @@ void HttpServer::handle_client() {
         }
 
         std::string_view req_body = path.substr(req_body_start, path.size() - req_body_start);
-        std::cout << "body: " << req_body << '\n';
+        // std::cout << "body: " << req_body << '\n';
 
         // TODO: create a map that has a key route and function pointer
 
@@ -191,10 +188,11 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("PUT"):
             case compile_time_method_hash("PATCH"): {
                 const Request req { path, std::string(req_body)};
-                Handler route_fn = routes[method][route];
                 if (routes[method].find(route) != routes[method].end()) {
                     Handler route_fn = routes[method][route];
-                    route_fn(req, res);
+                    if (route_fn != nullptr) {
+                        route_fn(req, res);
+                    }
                     response =
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
@@ -221,7 +219,7 @@ void HttpServer::handle_client() {
                     "\r\n" +
                     std::string(res.body);
 
-                std::cout << request_buffer << "\n";
+                // std::cout << request_buffer << "\n";
             }
         }
         int bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
@@ -230,7 +228,7 @@ void HttpServer::handle_client() {
             std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
             continue;
         }
-        std::cout << request_buffer << "\n";
+        // std::cout << request_buffer << "\n";
         close(conn_fd);
     }
 }
@@ -248,8 +246,7 @@ int HttpServer::get_listener_socket(int port) {
 
     int status = getaddrinfo(Constants::hostname, port_str.c_str(), &hints, &results);
     if (status != 0) {
-        std::cerr << stderr << " gai error: " << gai_strerror(status) << '\n';
-        return 1;
+        throw std::runtime_error("gai error: " + std::string(gai_strerror(status)));
     }
 
     // find the first file descriptor that does not fail
@@ -264,14 +261,13 @@ int HttpServer::get_listener_socket(int port) {
         int yes = 1;
         int sockopt_status = setsockopt(socket_file_descriptor, SOL_SOCKET,SO_REUSEADDR, &yes, sizeof(int));
         if (sockopt_status == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue setting socket options\n";
-            return 1;
+            throw std::runtime_error(std::string(strerror(errno)) + ": issue setting socket options");
         }
 
         // associate the socket descriptor with the port passed into getaddrinfo()
         int bind_status = bind(socket_file_descriptor, addrinfo_ptr->ai_addr, addrinfo_ptr->ai_addrlen);
         if (bind_status == -1) {
-            std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port\n";
+            std::cerr << "\n\n" << strerror(errno) << ": issue binding the socket descriptor with a port";
             continue;
         }
 
@@ -281,14 +277,12 @@ int HttpServer::get_listener_socket(int port) {
     freeaddrinfo(results);
 
     if (addrinfo_ptr == nullptr) {
-        std::cerr << "\n\n" << strerror(errno) << ": failed to bind port to socket\n";
-        return 1;
+        throw std::runtime_error(std::string(strerror(errno)) + ": failed to bind port to socket");
     }
 
     int listen_status = ::listen(socket_file_descriptor, Constants::backlog);
     if (listen_status == -1) {
-        std::cerr << "\n\n" << strerror(errno) << ": issue trying to call listen()\n";
-        return 1;
+        throw std::runtime_error(std::string(strerror(errno)) + ": issue trying to call listen()");
     }
 
     return socket_file_descriptor;

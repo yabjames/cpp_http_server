@@ -1,7 +1,8 @@
+#include <iostream>
+
 #include "../include/HttpServer.h"
 
 int main() {
-
     HttpServer server {};
 
     server.get_mapping("/test", [](const HttpServer::Request&, HttpServer::Response& res){
@@ -12,9 +13,10 @@ int main() {
         res.body = "this is the other route";
     });
 
-    server.post_mapping("/post", [](const HttpServer::Request& req, HttpServer::Response& res){
-        res.body = "post api route: " + req.body;
-    });
-
-    server.listen(3490);
+    try {
+        server.listen(3490);
+    } catch (const std::exception& err) {
+        std::cerr << err.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
