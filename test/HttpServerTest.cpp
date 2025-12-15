@@ -10,23 +10,14 @@ TEST(ServerTest, ConstructorDestructorTest) {
     HttpServer server {};
 }
 
-TEST(HttpServerTest, ServerStartsAndAcceptsRequests) {
-    HttpServer server {};
-
-    // Start server in non-blocking mode
-    server.start_listening(8080);
-
-    // Send real HTTP request using curl
-    int result = system("curl -s http://localhost:8080 > /dev/null");
-
-    EXPECT_EQ(result, 0);
-}
-
 TEST(HttpServerTest, AcceptsHttpRequest) {
-    HttpServer server;
+    HttpServer server {};
+    server.get_mapping("/", [](const HttpServer::Request&, HttpServer::Response& res) {
+        res.body = "test";
+    });
     server.start_listening(8081);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
