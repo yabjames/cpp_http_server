@@ -52,7 +52,7 @@ void HttpServer::listen(int port) {
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
-        int conn_file_descriptor = accept(listener_fd, (struct sockaddr*)&incoming_addr, &addr_size);
+        int conn_file_descriptor = accept(listener_fd, reinterpret_cast<struct sockaddr *>(&incoming_addr), &addr_size);
         if (conn_file_descriptor == -1) {
             // If we're stopping, accept failures are expected; don't spam logs.
             if (stop_flag.load()) break;
@@ -143,12 +143,14 @@ void HttpServer::handle_client() {
         // std::cout << "route: " << route << '\n';
 
         // get body
-        size_t req_body_start = path.find("\r\n\r\n") + 4;
-        if (req_body_start == std::string_view::npos) {
+        size_t req_body_delimiter = path.find("\r\n\r\n");
+        if (req_body_delimiter == std::string_view::npos) {
             close (conn_fd);
             std::cerr << "Invalid request formatting: the start of the request body is malformed\n";
+            continue;
         }
 
+        size_t req_body_start = req_body_delimiter + 4;
         std::string_view req_body = path.substr(req_body_start, path.size() - req_body_start);
         // std::cout << "body: " << req_body << '\n';
 
