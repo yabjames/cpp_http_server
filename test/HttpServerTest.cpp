@@ -246,11 +246,11 @@ TEST(HttpServerTest, HandleNonExistentPostRoute) {
     addr.sin_port = htons(8087);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    std::string request = "POST /foo HTTP/1.1\r\n";
-        // "Host: localhost\r\n"
-        // "Connection: keep-alive\r\n"
-        // "Content-Length: 0\r\n"
-        // "\r\n";
+    std::string request = "POST /foo HTTP/1.1\r\n"
+        "Host: localhost\r\n"
+        "Connection: keep-alive\r\n"
+        "Content-Length: 0\r\n"
+        "\r\n";
 
     int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
     ASSERT_EQ(connect(listener_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
@@ -275,11 +275,11 @@ TEST(HttpServerTest, HandleNonExistentHttpMethod) {
     addr.sin_port = htons(8088);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    std::string request = "FOO /foo HTTP/1.1\r\n";
-    // "Host: localhost\r\n"
-    // "Connection: keep-alive\r\n"
-    // "Content-Length: 0\r\n"
-    // "\r\n";
+    std::string request = "FOO /foo HTTP/1.1\r\n"
+    "Host: localhost\r\n"
+    "Connection: keep-alive\r\n"
+    "Content-Length: 0\r\n"
+    "\r\n";
 
     int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
     ASSERT_EQ(connect(listener_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
