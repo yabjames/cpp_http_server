@@ -14,7 +14,7 @@ public:
 
     ~HttpServer();
 
-    std::atomic<bool> stop_flag;
+    std::atomic<bool> stop_flag {};
 
     struct Request {
         std::string_view route;
