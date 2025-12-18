@@ -1,6 +1,5 @@
 #include "../include/HttpServer.h"
 #include "../include/constants.h"
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
@@ -52,7 +51,7 @@ void HttpServer::listen(int port) {
         struct sockaddr_storage incoming_addr {};
         socklen_t addr_size {sizeof(incoming_addr)};
 
-        int conn_file_descriptor = accept(listener_fd, reinterpret_cast<struct sockaddr *>(&incoming_addr), &addr_size);
+        const int conn_file_descriptor = accept(listener_fd, reinterpret_cast<struct sockaddr *>(&incoming_addr), &addr_size);
         if (conn_file_descriptor == -1) {
             // If we're stopping, accept failures are expected; don't spam logs.
             if (stop_flag.load()) break;
@@ -94,10 +93,66 @@ void HttpServer::store_conn_fd(int conn_fd) {
     queue.push(conn_fd);
  }
 
+bool HttpServer::parse(const std::string_view buffer, Request& out) {
+    size_t offset {0};
+    if (parse_method(buffer, out.method, offset) &&
+        parse_route(buffer, out.route, offset) &&
+        parse_body(buffer, out.body, offset)) {
+        return true;
+        }
+    return false;
+}
+
+bool HttpServer::is_valid_request(std::string &request_buffer, ssize_t bytes_read) {
+    // Check if the request is empty
+    if (bytes_read <= 0) {
+        std::cerr << "Invalid request formatting: 0 bytes read\n";
+        return false;
+    }
+    request_buffer[bytes_read] = '\0';  // Null-terminate for safety
+    return true;
+}
+
+bool HttpServer::parse_method(const std::string_view buffer, std::string_view& method, size_t& offset) {
+    offset = buffer.find(' ');
+    if (offset == std::string_view::npos) {
+        std::cerr << "Invalid request formatting: no spaces\n";
+        return false;
+    }
+    method = buffer.substr(0, offset);
+    offset++;
+    return true;
+}
+
+bool HttpServer::parse_route(const std::string_view buffer, std::string_view& route, size_t& offset) {
+    const size_t route_start_itr = offset;
+    offset = buffer.find(' ', route_start_itr);
+    if (offset == std::string_view::npos) {
+        std::cerr << "Invalid request formatting: no valid route\n";
+        return false;
+    }
+    route = buffer.substr(route_start_itr, offset - route_start_itr);
+    offset++;
+    return true;
+}
+
+bool HttpServer::parse_body(std::string_view buffer, std::string_view& body, const size_t& offset) {
+    size_t body_start_itr = buffer.find("\r\n\r\n", offset);
+    if (body_start_itr == std::string_view::npos) {
+        std::cerr << "Invalid request formatting: the start of the request body is malformed\n";
+        return false;
+    }
+    body_start_itr += 4;
+    body = buffer.substr(body_start_itr, buffer.size() - body_start_itr);
+    return true;
+}
+
 void HttpServer::handle_client() {
     while (!stop_flag.load()) {
         // Read the incoming HTTP request
-        char request_buffer[4096];
+        std::string request_buffer;
+        request_buffer.resize(4096);
+
         int conn_fd {};
 
         // if queue is empty
@@ -106,68 +161,30 @@ void HttpServer::handle_client() {
             continue;
         }
 
-        ssize_t bytes_read = recv(conn_fd, request_buffer, sizeof(request_buffer) - 1, 0);
-
-        if (bytes_read <= 0) {
+        ssize_t bytes_read = recv(conn_fd, request_buffer.data(), request_buffer.size(), 0);
+        if (!is_valid_request(request_buffer, bytes_read)) {
             close(conn_fd);
-            if (stop_flag.load()) return;
-            std::cerr << "Invalid request formatting: 0 bytes read\n";
             continue;
         }
-        request_buffer[bytes_read] = '\0';  // Null-terminate for safety
 
-        std::string_view path {request_buffer};
-
-        // find the method
-        size_t method_itr = path.find(' ');
-        if (method_itr == std::string_view::npos) {
+        Request req {};
+        if (!parse(request_buffer, req)) {
             close(conn_fd);
-            std::cerr << "Invalid request formatting: no spaces\n";
             continue;
         }
-
-        // check for valid method
-        std::string_view method = path.substr(0, method_itr);
-        // std::cout << "method: " << method << '\n';
-
-        // get the route which is the second word
-        size_t route_start = method_itr + 1;
-        size_t route_end = path.find(' ', route_start);
-        if (route_end == std::string_view::npos) {
-            close(conn_fd);
-            std::cerr << "Invalid request formatting: no valid route\n";
-            continue;
-        }
-
-        std::string_view route = path.substr(route_start, route_end - route_start);
-        // std::cout << "route: " << route << '\n';
-
-        // get body
-        size_t req_body_delimiter = path.find("\r\n\r\n");
-        if (req_body_delimiter == std::string_view::npos) {
-            close (conn_fd);
-            std::cerr << "Invalid request formatting: the start of the request body is malformed\n";
-            continue;
-        }
-
-        size_t req_body_start = req_body_delimiter + 4;
-        std::string_view req_body = path.substr(req_body_start, path.size() - req_body_start);
-        // std::cout << "body: " << req_body << '\n';
-
-        // TODO: create a map that has a key route and function pointer
 
         Response res {};
         std::string response {};
-        switch (method_hash(method)) {
+        switch (method_hash(req.method)) {
             case compile_time_method_hash("GET"):
             case compile_time_method_hash("DELETE"):
             case compile_time_method_hash("HEAD"):
             case compile_time_method_hash("OPTIONS"):
             case compile_time_method_hash("CONNECT"):
             case compile_time_method_hash("TRACE"): {
-                const Request req { path, ""};
-                if (routes[method].find(route) != routes[method].end()) {
-                    Handler route_fn = routes[method][route];
+                req.body = "";
+                if (routes[req.method].find(req.route) != routes[req.method].end()) {
+                    Handler route_fn = routes[req.method][req.route];
                     route_fn(req, res);
                     response =
                         "HTTP/1.1 200 OK\r\n"
@@ -189,9 +206,8 @@ void HttpServer::handle_client() {
             case compile_time_method_hash("POST"):
             case compile_time_method_hash("PUT"):
             case compile_time_method_hash("PATCH"): {
-                const Request req { path, std::string(req_body)};
-                if (routes[method].find(route) != routes[method].end()) {
-                    Handler route_fn = routes[method][route];
+                if (routes[req.method].find(req.route) != routes[req.method].end()) {
+                    Handler route_fn = routes[req.method][req.route];
                     if (route_fn != nullptr) {
                         route_fn(req, res);
                     }
@@ -220,8 +236,6 @@ void HttpServer::handle_client() {
                     "Connection: close\r\n"
                     "\r\n" +
                     std::string(res.body);
-
-                // std::cout << request_buffer << "\n";
             }
         }
         int bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
@@ -230,7 +244,6 @@ void HttpServer::handle_client() {
             std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
             continue;
         }
-        // std::cout << request_buffer << "\n";
         close(conn_fd);
     }
 }

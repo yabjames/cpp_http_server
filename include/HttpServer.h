@@ -17,8 +17,9 @@ public:
     std::atomic<bool> stop_flag {};
 
     struct Request {
+        std::string_view method;
         std::string_view route;
-        std::string body;
+        std::string_view body;
     };
 
     struct Response {
@@ -28,6 +29,8 @@ public:
     };
 
     using Handler = std::function<void(const Request&, Response&)>;
+
+    static bool is_valid_request(std::string &request_buffer, ssize_t bytes_read);
 
     void get_mapping(std::string_view route, const Handler& fn);
 
@@ -73,6 +76,16 @@ private:
     void store_conn_fd(int conn_fd);
 
     int listener_fd {-1};
+
+    std::string_view get_method(int conn_fd, std::string_view path, size_t &method_itr, bool &continues);
+
+    static bool parse(std::string_view buffer, Request& out);
+
+    static bool parse_method(std::string_view buffer, std::string_view& method, size_t& offset);
+
+    static bool parse_route(std::string_view buffer, std::string_view& route, size_t& offset);
+
+    static bool parse_body(std::string_view buffer, std::string_view& body, const size_t& offset);
 
     /*
      * @brief return a listener socket file descriptor
