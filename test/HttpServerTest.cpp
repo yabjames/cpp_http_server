@@ -39,7 +39,7 @@ TEST(HttpServerTest, AcceptsHttpRequest) {
     send(sock, request, strlen(request), 0);
 
     char buffer[1024];
-    int bytes = recv(sock, buffer, sizeof(buffer), 0);
+    const ssize_t bytes = recv(sock, buffer, sizeof(buffer), 0);
 
     EXPECT_GT(bytes, 0);  // Server sent response
 
@@ -68,7 +68,7 @@ TEST(HttpServerTest, AcceptGetRequest) {
     send(sock, request, strlen(request), 0);
 
     char buffer[1024] {};
-    int bytes = recv(sock, buffer, sizeof(buffer), 0);
+    const ssize_t bytes = recv(sock, buffer, sizeof(buffer), 0);
     std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);
@@ -99,8 +99,8 @@ TEST(HttpServerTest, IgnoreGetReqBody) {
     send(sock, request, strlen(request), 0);
 
     char buffer[1024] {};
-    int bytes = recv(sock, buffer, sizeof(buffer), 0);
-    std::string result = std::string(buffer);
+    const ssize_t bytes = recv(sock, buffer, sizeof(buffer), 0);
+    const std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);
 
@@ -139,7 +139,7 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
         send(sock, request.c_str(), request.size(), 0);
 
         char buffer[1024] {};
-        int bytes = recv(sock, buffer, sizeof(buffer), 0);
+        const ssize_t bytes = recv(sock, buffer, sizeof(buffer), 0);
         std::string result = std::string(buffer);
 
         EXPECT_GT(bytes, 0);
@@ -192,20 +192,20 @@ TEST(HttpServerTest, AllUniqueReqMethods) {
     addr.sin_port = htons(HttpServerTest::port);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    const std::string methods[9] = { "GET", "POST", "PUT", "PATCH", "OPTIONS", "HEAD", "DELETE", "CONNECT", "TRACE" };
     for (int i = 0; i < 9; i++) {
+        const std::string methods[9] = { "GET", "POST", "PUT", "PATCH", "OPTIONS", "HEAD", "DELETE", "CONNECT", "TRACE" };
         std::string request = methods[i] + " /foo HTTP/1.1\r\n"
-            "Host: localhost\r\n"
-            "Connection: keep-alive\r\n"
-            "Content-Length: 0\r\n"
-            "\r\n";
+                              "Host: localhost\r\n"
+                              "Connection: keep-alive\r\n"
+                              "Content-Length: 0\r\n"
+                              "\r\n";
 
         int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
         ASSERT_EQ(connect(listener_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)), 0);
         send(listener_fd, request.c_str(), request.size(), 0);
 
         char buffer[1024] {};
-        int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+        const ssize_t bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
         std::string result = std::string(buffer);
 
         EXPECT_GT(bytes, 0);
@@ -235,7 +235,7 @@ TEST(HttpServerTest, HandleNonExistentGetRoute) {
     send(listener_fd, request.c_str(), request.size(), 0);
 
     char buffer[1024] {};
-    int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+    const ssize_t bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
     std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);
@@ -268,7 +268,7 @@ TEST(HttpServerTest, HandleNonExistentPostRoute) {
     send(listener_fd, request.c_str(), request.size(), 0);
 
     char buffer[1024] {};
-    int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+    const ssize_t bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
     std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);
@@ -297,7 +297,7 @@ TEST(HttpServerTest, HandleNonExistentHttpMethod) {
     send(listener_fd, request.c_str(), request.size(), 0);
 
     char buffer[1024] {};
-    int bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
+    const ssize_t bytes = recv(listener_fd, buffer, sizeof(buffer), 0);
     std::string result = std::string(buffer);
 
     EXPECT_GT(bytes, 0);

@@ -8,17 +8,17 @@
 #include <unistd.h>
 #include <unordered_map>
 
-constexpr size_t compile_time_method_hash(std::string_view method) {
+constexpr size_t compile_time_method_hash(const std::string_view method) {
     size_t hash = 0;
-    for (char c : method) {
+    for (const char c : method) {
         hash += c;
     }
     return hash;
 }
 
-size_t method_hash(std::string_view method) {
+size_t method_hash(const std::string_view method) {
     size_t hash = 0;
-    for (char c : method) {
+    for (const char c : method) {
         hash += c;
     }
     return hash;
@@ -33,8 +33,8 @@ HttpServer::HttpServer() {
 
 HttpServer::~HttpServer() {
     this->stop_listening();
-    for (int i = 0; i < threads.size(); i++) {
-        threads[i].join();
+    for (auto & thread : threads) {
+        thread.join();
         // std::cout << "thread removed: " << i << "\n";
     }
     threads.clear();
@@ -193,7 +193,7 @@ void HttpServer::handle_client() {
                         "\r\n" +
                         std::string(res.body);
                 } else {
-                    res.body = "{\"error\": \"The requested API route does not exist\"}";
+                    res.body = R"({"error": "The requested API route does not exist"})";
                     response =
                         "HTTP/1.1 404 Not Found\r\n"
                         "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
@@ -218,7 +218,7 @@ void HttpServer::handle_client() {
                         "\r\n" +
                         std::string(res.body);
                 } else {
-                    res.body = "{\"error\": \"The requested endpoint does not exist\"}";
+                    res.body = R"({\"error\": \"The requested endpoint does not exist\"})";
                     response =
                         "HTTP/1.1 404 Not Found\r\n"
                         "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
@@ -229,7 +229,7 @@ void HttpServer::handle_client() {
                 break;
             }
             default: {
-                res.body = "{\"error\": \"The request does not have a valid HTTP method\"}";
+                res.body = R"({\"error\": \"The request does not have a valid HTTP method\"})";
                 response =
                     "HTTP/1.1 500 Error\r\n"
                     "Content-Length: " + std::to_string(res.body.size()) + "\r\n"
@@ -238,7 +238,7 @@ void HttpServer::handle_client() {
                     std::string(res.body);
             }
         }
-        int bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
+        const ssize_t bytes_sent = send(conn_fd, response.c_str(), response.size(), 0);
         if (bytes_sent == -1) {
             close(conn_fd);
             std::cerr << "\n\n" << strerror(errno) << ": issue sending message to connection\n";
@@ -248,11 +248,11 @@ void HttpServer::handle_client() {
     }
 }
 
-int HttpServer::get_listener_socket(int port) {
-    std::string port_str = std::to_string(port);
-    struct addrinfo hints {};
-    struct addrinfo* addrinfo_ptr {};
-    struct addrinfo* results {};
+int HttpServer::get_listener_socket(const int port) {
+    const std::string port_str = std::to_string(port);
+    addrinfo hints {};
+    const addrinfo* addrinfo_ptr {};
+    addrinfo* results {};
     int socket_file_descriptor {};
 
     hints.ai_family = AF_UNSPEC;     // can be IPv4 or 6
@@ -303,38 +303,38 @@ int HttpServer::get_listener_socket(int port) {
     return socket_file_descriptor;
 }
 
-void HttpServer::get_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::get_mapping(const std::string_view route, const Handler& fn) {
     routes["GET"][route] = fn;
 }
 
-void HttpServer::post_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::post_mapping(const std::string_view route, const Handler& fn) {
     routes["POST"][route] = fn;
 }
 
-void HttpServer::put_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::put_mapping(const std::string_view route, const Handler& fn) {
     routes["PUT"][route] = fn;
 }
 
-void HttpServer::patch_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::patch_mapping(const std::string_view route, const Handler& fn) {
     routes["PATCH"][route] = fn;
 }
 
-void HttpServer::delete_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::delete_mapping(const std::string_view route, const Handler& fn) {
     routes["DELETE"][route] = fn;
 }
 
-void HttpServer::head_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::head_mapping(const std::string_view route, const Handler& fn) {
     routes["HEAD"][route] = fn;
 }
 
-void HttpServer::options_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::options_mapping(const std::string_view route, const Handler& fn) {
     routes["OPTIONS"][route] = fn;
 }
 
-void HttpServer::connect_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::connect_mapping(const std::string_view route, const Handler& fn) {
     routes["CONNECT"][route] = fn;
 }
 
-void HttpServer::trace_mapping(std::string_view route, const Handler& fn) {
+void HttpServer::trace_mapping(const std::string_view route, const Handler& fn) {
     routes["TRACE"][route] = fn;
 }

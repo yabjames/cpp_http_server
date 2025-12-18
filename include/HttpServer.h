@@ -14,7 +14,7 @@ public:
 
     ~HttpServer();
 
-    std::atomic<bool> stop_flag {};
+    std::atomic<bool> stop_flag{};
 
     struct Request {
         std::string_view method;
@@ -28,27 +28,27 @@ public:
         int status;
     };
 
-    using Handler = std::function<void(const Request&, Response&)>;
+    using Handler = std::function<void(const Request &, Response &)>;
 
     static bool is_valid_request(std::string &request_buffer, ssize_t bytes_read);
 
-    void get_mapping(std::string_view route, const Handler& fn);
+    void get_mapping(std::string_view route, const Handler &fn);
 
-    void post_mapping(std::string_view route, const Handler& fn);
+    void post_mapping(std::string_view route, const Handler &fn);
 
-    void put_mapping(std::string_view route, const Handler& fn);
+    void put_mapping(std::string_view route, const Handler &fn);
 
-    void patch_mapping(std::string_view route, const Handler& fn);
+    void patch_mapping(std::string_view route, const Handler &fn);
 
-    void delete_mapping(std::string_view route, const Handler& fn);
+    void delete_mapping(std::string_view route, const Handler &fn);
 
-    void head_mapping(std::string_view route, const Handler& fn);
+    void head_mapping(std::string_view route, const Handler &fn);
 
-    void options_mapping(std::string_view route, const Handler& fn);
+    void options_mapping(std::string_view route, const Handler &fn);
 
-    void connect_mapping(std::string_view route, const Handler& fn);
+    void connect_mapping(std::string_view route, const Handler &fn);
 
-    void trace_mapping(std::string_view route, const Handler& fn);
+    void trace_mapping(std::string_view route, const Handler &fn);
 
     /**
      * Tells the server to start listening/accepting requests from a specified port. This function is blocking.
@@ -71,33 +71,29 @@ private:
 
     std::vector<std::thread> threads;
 
-    std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
+    std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler> > routes;
 
     void store_conn_fd(int conn_fd);
 
-    int listener_fd {-1};
+    int listener_fd{-1};
 
     std::string_view get_method(int conn_fd, std::string_view path, size_t &method_itr, bool &continues);
 
-    static bool parse(std::string_view buffer, Request& out);
+    static bool parse(std::string_view buffer, Request &out);
 
-    static bool parse_method(std::string_view buffer, std::string_view& method, size_t& offset);
+    static bool parse_method(std::string_view buffer, std::string_view &method, size_t &offset);
 
-    static bool parse_route(std::string_view buffer, std::string_view& route, size_t& offset);
+    static bool parse_route(std::string_view buffer, std::string_view &route, size_t &offset);
 
-    static bool parse_body(std::string_view buffer, std::string_view& body, const size_t& offset);
+    static bool parse_body(std::string_view buffer, std::string_view &body, const size_t &offset);
 
     /*
      * @brief return a listener socket file descriptor
      */
-    int get_listener_socket(int port);
+    static int get_listener_socket(int port);
 
     /**
-        * @brief Should be passed into a thread() worker to send a response back to an HTTP client.
-        *        A side-effect is that it will toggle the occupancy in the thread_pool_occupied member array
-        * @param thread_pool_id Tells the SendResponse function which array index to toggle in the thread_pool_occupied array
-        * @param conn_file_descriptor Used to send the response through the associated socket
-        */
+     * @brief Should be passed into a thread() worker to send a response back to an HTTP client.
+     */
     void handle_client();
-
 };
