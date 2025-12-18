@@ -16,6 +16,8 @@ add_library(${LIBRARY}
         include/HttpServer.h
         include/AtomicQueue.h
         include/constants.h
+        src/HttpParser.cpp
+        include/HttpParser.h
 )
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)

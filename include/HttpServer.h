@@ -20,6 +20,7 @@ class HttpServer {
 		std::string_view method;
 		std::string_view route;
 		std::string_view body;
+		std::unordered_map<std::string, std::string> path_params;
 	};
 
 	struct Response {
@@ -78,23 +79,15 @@ class HttpServer {
 					   std::unordered_map<std::string_view, Handler>>
 		routes;
 
+	std::unordered_map<std::string_view, std::vector<std::string_view>>
+		route_path_params;
+
 	void store_conn_fd(int conn_fd);
 
 	int listener_fd{-1};
 
 	std::string_view get_method(int conn_fd, std::string_view path,
 								size_t &method_itr, bool &continues);
-
-	static bool parse(std::string_view buffer, Request &out);
-
-	static bool parse_method(std::string_view buffer, std::string_view &method,
-							 size_t &offset);
-
-	static bool parse_route(std::string_view buffer, std::string_view &route,
-							size_t &offset);
-
-	static bool parse_body(std::string_view buffer, std::string_view &body,
-						   const size_t &offset);
 
 	/*
 	 * @brief return a listener socket file descriptor
