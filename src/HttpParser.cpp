@@ -56,3 +56,28 @@ bool HttpParser::parse_body(std::string_view buffer, std::string_view &body,
 	body = buffer.substr(body_start_itr, buffer.size() - body_start_itr);
 	return true;
 }
+
+std::vector<std::string_view> HttpParser::split_path(std::string_view path) {
+    std::vector<std::string_view> segments;
+    size_t start = 0;
+
+    while (start < path.size()) {
+        if (path[start] == '/') {
+            ++start;
+            continue;
+        }
+
+        size_t end = path.find('/', start);
+
+        // found the last segment
+        if (end == std::string_view::npos) {
+            segments.push_back(path.substr(start));
+            break;
+        }
+
+        segments.push_back(path.substr(start, end - start));
+        start = end;
+    }
+
+    return segments;
+}
