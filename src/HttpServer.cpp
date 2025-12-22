@@ -1,5 +1,5 @@
-#include "../include/HttpServer.h"
-#include "../include/constants.h"
+#include "HttpServer.h"
+#include "constants.h"
 
 #include <HttpParser.h>
 #include <cstring>
@@ -108,6 +108,7 @@ bool HttpServer::is_valid_request(std::string &request_buffer,
 	request_buffer[bytes_read] = '\0'; // Null-terminate for safety
 	return true;
 }
+
 void HttpServer::handle_client() {
 	while (!stop_flag.load()) {
 		// Read the incoming HTTP request

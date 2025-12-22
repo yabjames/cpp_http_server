@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../include/AtomicQueue.h"
+#include "AtomicQueue.h"
+
 #include <atomic>
 #include <functional>
 #include <string>

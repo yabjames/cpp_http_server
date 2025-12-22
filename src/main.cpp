@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../include/HttpServer.h"
+#include "HttpServer.h"
 
 int main() {
 	HttpServer server{};
