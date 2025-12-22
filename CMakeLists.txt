@@ -27,7 +27,10 @@ target_link_libraries(${LIBRARY} PRIVATE Threads::Threads)
 
 # unit tests executable
 enable_testing()
-add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
+add_executable(${TEST_TARGET}
+    test/HttpServerTest.cpp
+    test/HttpParserTest.cpp
+)
 target_link_libraries(${TEST_TARGET}
         PRIVATE ${LIBRARY} GTest::gtest_main
 )
