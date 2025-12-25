@@ -61,6 +61,12 @@ std::vector<std::string_view> HttpParser::split_path(std::string_view path) {
     std::vector<std::string_view> segments;
     size_t start = 0;
 
+	// If there is only the root '/' for the client request
+	if (path == "/") {
+		segments.push_back(path);
+		return segments;
+	}
+
     while (start < path.size()) {
         if (path[start] == '/') {
             ++start;
