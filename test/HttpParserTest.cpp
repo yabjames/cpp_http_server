@@ -14,3 +14,11 @@ TEST(HttpParserTest, ShouldSplitPath) {
     EXPECT_EQ(segments[0], "foo");
     EXPECT_EQ(segments[1], "foo2");
 }
+
+TEST(HttpParserTest, ShouldHaveRootPath) {
+	const std::string path = "/";
+	const std::vector<std::string_view> segments = HttpParser::split_path(path);
+
+	EXPECT_EQ(segments.size(), 1);
+	EXPECT_EQ(segments[0], "/");
+}
