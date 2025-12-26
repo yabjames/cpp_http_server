@@ -1,27 +1,13 @@
 #pragma once
 
 #include "HttpServer.h"
+#include "HttpUtils.h"
 
 #include <string_view>
 #include <vector>
 
 class HttpParser {
   public:
-	struct RouteSegment {
-		enum class Type { Literal, Parameter };
-		Type type;
-		std::string value;
-	};
-
-	struct Route {
-		std::vector<RouteSegment> segments;
-	};
-
-	struct PathParam {
-		std::string_view name;
-		std::string_view value;
-	};
-
 	static bool match_route(
 		const Route& route,
 		std::string_view request_path,
