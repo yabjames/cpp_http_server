@@ -1,6 +1,8 @@
 #pragma once
 
 #include "AtomicQueue.h"
+#include "PathParams.h"
+#include "Route.h"
 
 #include <atomic>
 #include <functional>
@@ -21,7 +23,7 @@ class HttpServer {
 		std::string_view method;
 		std::string_view route;
 		std::string_view body;
-		std::unordered_map<std::string, std::string> path_params;
+		PathParams path_params;
 	};
 
 	struct Response {
@@ -77,7 +79,7 @@ class HttpServer {
 	std::vector<std::thread> threads;
 
 	std::unordered_map<std::string_view,
-					   std::unordered_map<std::string_view, Handler>>
+					   std::vector<std::pair<HttpUtils::Route, Handler>>>
 		routes;
 
 	std::unordered_map<std::string_view, std::vector<std::string_view>>
