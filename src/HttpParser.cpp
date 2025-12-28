@@ -28,12 +28,14 @@ HttpParser::Route HttpParser::compile_route(const std::string_view path) {
 	return route;
 }
 
-bool HttpParser::match_route(
-	const Route& route,
-	const std::string_view request_path,
-	std::vector<PathParam>& out_params
-) {
-	const std::vector<std::string_view> request_segments = split_path(request_path);
+/**
+ *
+ * @param route
+ * @param request request.path_params will be modified by match_route
+ * @return
+ */
+bool HttpParser::match_route(const HttpUtils::Route& route, HttpServer::Request& request) {
+	const std::vector<std::string_view> request_segments = split_path(request.route);
 
 	// Segment count must match
 	if (request_segments.size() != route.segments.size()) {
@@ -42,19 +44,22 @@ bool HttpParser::match_route(
 
 	// Compare segment by segment
 	for (size_t i = 0; i < route.segments.size(); ++i) {
-		const RouteSegment route_seg = route.segments[i];
-		const std::string_view req_seg   = request_segments[i];
+		const HttpUtils::RouteSegment route_seg = route.segments[i];
+		const std::string_view req_seg = request_segments[i];
 
-		if (route_seg.type == RouteSegment::Type::Literal) {
+		if (route_seg.type == HttpUtils::RouteSegment::Type::Literal) {
 			// Literal must match exactly
 			if (route_seg.value != req_seg) {
 				return false;
 			}
-		} else {
-			// Parameter always matches capture value
-			const PathParam path_param {route_seg.value, req_seg};
-			out_params.push_back(path_param);
 		}
+	}
+	for (size_t i = 0; i < route.segments.size(); ++i) {
+		if (route.segments[i].type == HttpUtils::RouteSegment::Type::Literal) continue;
+
+		const HttpUtils::RouteSegment route_seg = route.segments[i];
+		const std::string_view req_seg = request_segments[i];
+		request.path_params.add_param(route_seg.value, req_seg);
 	}
 
 	return true;
