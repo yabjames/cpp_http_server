@@ -6,17 +6,17 @@
 #include <sys/socket.h>
 
 class HttpParserTest : public ::testing::Test {
-  public:
+public:
 	static constexpr int port{8081};
 };
 
 TEST(HttpParserTest, ShouldSplitPath) {
-    std::string path = "/foo/foo2";
-    std::vector<std::string_view> segments = HttpParser::split_path(path);
+	std::string path = "/foo/foo2";
+	std::vector<std::string_view> segments = HttpParser::split_path(path);
 
-    EXPECT_EQ(segments.size(), 2);
-    EXPECT_EQ(segments[0], "foo");
-    EXPECT_EQ(segments[1], "foo2");
+	EXPECT_EQ(segments.size(), 2);
+	EXPECT_EQ(segments[0], "foo");
+	EXPECT_EQ(segments[1], "foo2");
 }
 
 TEST(HttpParserTest, ShouldHaveRootPath) {
@@ -32,13 +32,15 @@ TEST(HttpParserTest, ShouldHavePathParameters) {
 		HttpServer server{};
 		server.get_mapping(
 			"/foo/{id}/{user}", [](HttpServer::Request &req,
-					   HttpServer::Response &res) {
+			                       HttpServer::Response &res) {
 				std::stringstream ss;
-				ss << "id: " << req.path_params.get_path_param("id").value() << "\n";
-				ss << "user: " << req.path_params.get_path_param("user").value() << "\n";
+				ss << "id: " << req.path_params.get_path_param("id").value() <<
+					"\n";
+				ss << "user: " << req.path_params.get_path_param("user").value()
+					<< "\n";
 				res.body = ss.str();
 			}
-		);
+			);
 
 		server.start_listening(8081);
 
@@ -56,11 +58,11 @@ TEST(HttpParserTest, ShouldHavePathParameters) {
 			0);
 
 		const std::string request = "GET /foo/123/james HTTP/1.1\r\n"
-							  "Host: localhost\r\n"
-							  "Connection: keep-alive\r\n"
-							  "Content-Length: 5\r\n"
-							  "\r\n"
-							  "hello";
+			"Host: localhost\r\n"
+			"Connection: keep-alive\r\n"
+			"Content-Length: 5\r\n"
+			"\r\n"
+			"hello";
 
 		send(sock, request.c_str(), request.size(), 0);
 
@@ -83,7 +85,7 @@ TEST(HttpParserTest, ShouldHandleNoPathParameters) {
 		HttpServer server{};
 		server.get_mapping(
 			"/foo/{id}/{user}", [](HttpServer::Request &req,
-					   HttpServer::Response &res) {
+			                       HttpServer::Response &res) {
 				std::stringstream ss;
 				try {
 					ss << req.path_params.get_path_param("foo").value() << "\n";
@@ -92,7 +94,7 @@ TEST(HttpParserTest, ShouldHandleNoPathParameters) {
 					res.body = "could not get path parameter foo";
 				}
 			}
-		);
+			);
 
 		server.start_listening(8081);
 
@@ -110,11 +112,11 @@ TEST(HttpParserTest, ShouldHandleNoPathParameters) {
 			0);
 
 		const std::string request = "GET /foo/123/james HTTP/1.1\r\n"
-							  "Host: localhost\r\n"
-							  "Connection: keep-alive\r\n"
-							  "Content-Length: 5\r\n"
-							  "\r\n"
-							  "hello";
+			"Host: localhost\r\n"
+			"Connection: keep-alive\r\n"
+			"Content-Length: 5\r\n"
+			"\r\n"
+			"hello";
 
 		send(sock, request.c_str(), request.size(), 0);
 
@@ -125,7 +127,9 @@ TEST(HttpParserTest, ShouldHandleNoPathParameters) {
 		EXPECT_GT(bytes, 0);
 		EXPECT_FALSE(result.find("id: 123") != std::string::npos);
 		EXPECT_FALSE(result.find("user: james") != std::string::npos);
-		EXPECT_TRUE(result.find("could not get path parameter foo") != std::string::npos);
+		EXPECT_TRUE(
+			result.find("could not get path parameter foo") != std::string::
+			npos);
 
 		close(sock);
 	} catch (const std::exception &e) {

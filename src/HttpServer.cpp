@@ -70,7 +70,7 @@ void HttpServer::listen(int port) {
 
 			// Otherwise log and continue or break as appropriate.
 			throw std::runtime_error("unable to obtain a valid connection file "
-									 "descriptor, exiting\n");
+				"descriptor, exiting\n");
 		}
 		this->store_conn_fd(conn_file_descriptor);
 	}
@@ -98,7 +98,7 @@ void HttpServer::stop_listening() {
 void HttpServer::store_conn_fd(int conn_fd) { queue.push(conn_fd); }
 
 bool HttpServer::is_valid_request(std::string &request_buffer,
-								  ssize_t bytes_read) {
+                                  ssize_t bytes_read) {
 	// Check if the request is empty
 	if (bytes_read <= 0) {
 		std::cerr << "Invalid request formatting: 0 bytes read\n";
@@ -146,7 +146,7 @@ void HttpServer::handle_client() {
 		case compile_time_method_hash("CONNECT"):
 		case compile_time_method_hash("TRACE"): {
 			req.body = "";
-			for (const auto& [route, route_fn] : routes[req.method]) {
+			for (const auto &[route, route_fn] : routes[req.method]) {
 				if (HttpParser::match_route(route, req)) {
 					// when the route is matched, fn should run and allow fn definitions to use pathParams
 					res.status = 200;
@@ -155,7 +155,8 @@ void HttpServer::handle_client() {
 					break;
 				}
 			}
-			if (res.status == 200) break;
+			if (res.status == 200)
+				break;
 			res.status = 404;
 			res.status_name = "Not Found";
 			res.body = R"({"error": "The requested endpoint does not exist"})";
@@ -163,7 +164,7 @@ void HttpServer::handle_client() {
 		case compile_time_method_hash("POST"):
 		case compile_time_method_hash("PUT"):
 		case compile_time_method_hash("PATCH"): {
-			for (const auto& [route, route_fn] : routes[req.method]) {
+			for (const auto &[route, route_fn] : routes[req.method]) {
 				if (HttpParser::match_route(route, req)) {
 					// when the route is matched, fn should run and allow fn definitions to use pathParams
 					res.status = 200;
@@ -172,7 +173,8 @@ void HttpServer::handle_client() {
 					break;
 				}
 			}
-			if (res.status == 200) break;
+			if (res.status == 200)
+				break;
 			res.status = 404;
 			res.status_name = "Not Found";
 			res.body = R"({"error": "The requested endpoint does not exist"})";
@@ -181,7 +183,8 @@ void HttpServer::handle_client() {
 		default: {
 			res.status = 500;
 			res.status_name = "Error";
-			res.body = R"({\"error\": \"The request does not have a valid HTTP method\"})";
+			res.body =
+				R"({\"error\": \"The request does not have a valid HTTP method\"})";
 		}
 		}
 		const ssize_t bytes_sent =
@@ -189,8 +192,8 @@ void HttpServer::handle_client() {
 		if (bytes_sent == -1) {
 			close(conn_fd);
 			std::cerr << "\n\n"
-					  << strerror(errno)
-					  << ": issue sending message to connection\n";
+				<< strerror(errno)
+				<< ": issue sending message to connection\n";
 			continue;
 		}
 		close(conn_fd);
@@ -204,47 +207,47 @@ int HttpServer::get_listener_socket(const int port) {
 	addrinfo *results{};
 	int socket_file_descriptor{};
 
-	hints.ai_family = AF_UNSPEC;	 // can be IPv4 or 6
+	hints.ai_family = AF_UNSPEC; // can be IPv4 or 6
 	hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
-	hints.ai_flags = AI_PASSIVE;	 // fill in IP for us
+	hints.ai_flags = AI_PASSIVE; // fill in IP for us
 
 	int status =
 		getaddrinfo(Constants::hostname, port_str.c_str(), &hints, &results);
 	if (status != 0) {
 		throw std::runtime_error("gai error: " +
-								 std::string(gai_strerror(status)));
+		                         std::string(gai_strerror(status)));
 	}
 
 	// find the first file descriptor that does not fail
 	for (addrinfo_ptr = results; addrinfo_ptr != nullptr;
-		 addrinfo_ptr = addrinfo_ptr->ai_next) {
+	     addrinfo_ptr = addrinfo_ptr->ai_next) {
 		socket_file_descriptor =
 			socket(addrinfo_ptr->ai_family, addrinfo_ptr->ai_socktype,
-				   addrinfo_ptr->ai_protocol);
+			       addrinfo_ptr->ai_protocol);
 		if (socket_file_descriptor == -1) {
 			std::cerr << "\n\n"
-					  << strerror(errno)
-					  << ": issue fetching the socket file descriptor\n";
+				<< strerror(errno)
+				<< ": issue fetching the socket file descriptor\n";
 			continue;
 		}
 
 		// set socket options
 		int yes = 1;
 		int sockopt_status = setsockopt(socket_file_descriptor, SOL_SOCKET,
-										SO_REUSEADDR, &yes, sizeof(int));
+		                                SO_REUSEADDR, &yes, sizeof(int));
 		if (sockopt_status == -1) {
 			throw std::runtime_error(std::string(strerror(errno)) +
-									 ": issue setting socket options");
+			                         ": issue setting socket options");
 		}
 
 		// associate the socket descriptor with the port passed into
 		// getaddrinfo()
 		int bind_status = bind(socket_file_descriptor, addrinfo_ptr->ai_addr,
-							   addrinfo_ptr->ai_addrlen);
+		                       addrinfo_ptr->ai_addrlen);
 		if (bind_status == -1) {
 			std::cerr << "\n\n"
-					  << strerror(errno)
-					  << ": issue binding the socket descriptor with a port";
+				<< strerror(errno)
+				<< ": issue binding the socket descriptor with a port";
 			continue;
 		}
 
@@ -255,13 +258,13 @@ int HttpServer::get_listener_socket(const int port) {
 
 	if (addrinfo_ptr == nullptr) {
 		throw std::runtime_error(std::string(strerror(errno)) +
-								 ": failed to bind port to socket");
+		                         ": failed to bind port to socket");
 	}
 
 	int listen_status = ::listen(socket_file_descriptor, Constants::backlog);
 	if (listen_status == -1) {
 		throw std::runtime_error(std::string(strerror(errno)) +
-								 ": issue trying to call listen()");
+		                         ": issue trying to call listen()");
 	}
 
 	return socket_file_descriptor;
@@ -280,12 +283,12 @@ void HttpServer::put_mapping(const std::string_view route, const Handler &fn) {
 }
 
 void HttpServer::patch_mapping(const std::string_view route,
-							   const Handler &fn) {
+                               const Handler &fn) {
 	routes["PATCH"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::delete_mapping(const std::string_view route,
-								const Handler &fn) {
+                                const Handler &fn) {
 	routes["DELETE"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
@@ -294,16 +297,16 @@ void HttpServer::head_mapping(const std::string_view route, const Handler &fn) {
 }
 
 void HttpServer::options_mapping(const std::string_view route,
-								 const Handler &fn) {
+                                 const Handler &fn) {
 	routes["OPTIONS"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::connect_mapping(const std::string_view route,
-								 const Handler &fn) {
+                                 const Handler &fn) {
 	routes["CONNECT"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::trace_mapping(const std::string_view route,
-							   const Handler &fn) {
+                               const Handler &fn) {
 	routes["TRACE"].emplace_back(HttpParser::path_to_route(route), fn);
 }

@@ -5,7 +5,7 @@
 #include <string>
 
 class HttpServerTest : public ::testing::Test {
-  public:
+public:
 	static constexpr int port{8081};
 };
 
@@ -14,8 +14,10 @@ TEST(ServerTest, ConstructorDestructorTest) { HttpServer server{}; }
 TEST(HttpServerTest, AcceptsHttpRequest) {
 	HttpServer server{};
 	server.get_mapping("/",
-					   [](const HttpServer::Request &,
-						  HttpServer::Response &res) { res.body = "test"; });
+	                   [](const HttpServer::Request &,
+	                      HttpServer::Response &res) {
+		                   res.body = "test";
+	                   });
 	server.start_listening(HttpServerTest::port);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -28,13 +30,13 @@ TEST(HttpServerTest, AcceptsHttpRequest) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)),
-			  0);
+	          0);
 
 	const char *request = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
-						  "Host: localhost\r\n"
-						  "Connection: keep-alive\r\n"
-						  "Content-Length: 0\r\n"
-						  "\r\n";
+		"Host: localhost\r\n"
+		"Connection: keep-alive\r\n"
+		"Content-Length: 0\r\n"
+		"\r\n";
 	send(sock, request, strlen(request), 0);
 
 	char buffer[1024];
@@ -63,7 +65,7 @@ TEST(HttpServerTest, AcceptGetRequest) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)),
-			  0);
+	          0);
 
 	const char *request = "GET /hello HTTP/1.1\r\n\r\n";
 	send(sock, request, strlen(request), 0);
@@ -81,8 +83,10 @@ TEST(HttpServerTest, AcceptGetRequest) {
 TEST(HttpServerTest, IgnoreGetReqBody) {
 	HttpServer server{};
 	server.get_mapping("/hello",
-					   [](const HttpServer::Request &req,
-						  HttpServer::Response &res) { res.body = req.body; });
+	                   [](const HttpServer::Request &req,
+	                      HttpServer::Response &res) {
+		                   res.body = req.body;
+	                   });
 	server.start_listening(HttpServerTest::port);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -95,7 +99,7 @@ TEST(HttpServerTest, IgnoreGetReqBody) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	ASSERT_EQ(connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)),
-			  0);
+	          0);
 
 	const char *request = "GET /hello HTTP/1.1\r\n\r\nhello, world";
 	send(sock, request, strlen(request), 0);
@@ -117,7 +121,9 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
 		HttpServer server{};
 		server.post_mapping(
 			"/foo", [](const HttpServer::Request &req,
-					   HttpServer::Response &res) { res.body = req.body; });
+			           HttpServer::Response &res) {
+				res.body = req.body;
+			});
 		server.start_listening(HttpServerTest::port);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -134,11 +140,11 @@ TEST(HttpServerTest, DoesntIgnorePostReqBody) {
 			0);
 
 		std::string request = "POST /foo HTTP/1.1\r\n"
-							  "Host: localhost\r\n"
-							  "Connection: keep-alive\r\n"
-							  "Content-Length: 5\r\n"
-							  "\r\n"
-							  "hello";
+			"Host: localhost\r\n"
+			"Connection: keep-alive\r\n"
+			"Content-Length: 5\r\n"
+			"\r\n"
+			"hello";
 
 		send(sock, request.c_str(), request.size(), 0);
 
@@ -160,32 +166,50 @@ TEST(HttpServerTest, AllUniqueReqMethods) {
 	HttpServer server{};
 
 	server.get_mapping("/foo",
-					   [](const HttpServer::Request &req,
-						  HttpServer::Response &res) { res.body = "0"; });
+	                   [](const HttpServer::Request &req,
+	                      HttpServer::Response &res) {
+		                   res.body = "0";
+	                   });
 	server.post_mapping("/foo",
-						[](const HttpServer::Request &req,
-						   HttpServer::Response &res) { res.body = "1"; });
+	                    [](const HttpServer::Request &req,
+	                       HttpServer::Response &res) {
+		                    res.body = "1";
+	                    });
 	server.put_mapping("/foo",
-					   [](const HttpServer::Request &req,
-						  HttpServer::Response &res) { res.body = "2"; });
+	                   [](const HttpServer::Request &req,
+	                      HttpServer::Response &res) {
+		                   res.body = "2";
+	                   });
 	server.patch_mapping("/foo",
-						 [](const HttpServer::Request &req,
-							HttpServer::Response &res) { res.body = "3"; });
+	                     [](const HttpServer::Request &req,
+	                        HttpServer::Response &res) {
+		                     res.body = "3";
+	                     });
 	server.options_mapping("/foo",
-						   [](const HttpServer::Request &req,
-							  HttpServer::Response &res) { res.body = "4"; });
+	                       [](const HttpServer::Request &req,
+	                          HttpServer::Response &res) {
+		                       res.body = "4";
+	                       });
 	server.head_mapping("/foo",
-						[](const HttpServer::Request &req,
-						   HttpServer::Response &res) { res.body = "5"; });
+	                    [](const HttpServer::Request &req,
+	                       HttpServer::Response &res) {
+		                    res.body = "5";
+	                    });
 	server.delete_mapping("/foo",
-						  [](const HttpServer::Request &req,
-							 HttpServer::Response &res) { res.body = "6"; });
+	                      [](const HttpServer::Request &req,
+	                         HttpServer::Response &res) {
+		                      res.body = "6";
+	                      });
 	server.connect_mapping("/foo",
-						   [](const HttpServer::Request &req,
-							  HttpServer::Response &res) { res.body = "7"; });
+	                       [](const HttpServer::Request &req,
+	                          HttpServer::Response &res) {
+		                       res.body = "7";
+	                       });
 	server.trace_mapping("/foo",
-						 [](const HttpServer::Request &req,
-							HttpServer::Response &res) { res.body = "8"; });
+	                     [](const HttpServer::Request &req,
+	                        HttpServer::Response &res) {
+		                     res.body = "8";
+	                     });
 
 	server.start_listening(HttpServerTest::port);
 
@@ -197,19 +221,19 @@ TEST(HttpServerTest, AllUniqueReqMethods) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	for (int i = 0; i < 9; i++) {
-		const std::string methods[9] = {"GET",	  "POST",	 "PUT",
-										"PATCH",  "OPTIONS", "HEAD",
-										"DELETE", "CONNECT", "TRACE"};
+		const std::string methods[9] = {"GET", "POST", "PUT",
+		                                "PATCH", "OPTIONS", "HEAD",
+		                                "DELETE", "CONNECT", "TRACE"};
 		std::string request = methods[i] + " /foo HTTP/1.1\r\n"
-										   "Host: localhost\r\n"
-										   "Connection: keep-alive\r\n"
-										   "Content-Length: 0\r\n"
-										   "\r\n";
+		                      "Host: localhost\r\n"
+		                      "Connection: keep-alive\r\n"
+		                      "Content-Length: 0\r\n"
+		                      "\r\n";
 
 		int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
 		ASSERT_EQ(connect(listener_fd, reinterpret_cast<sockaddr *>(&addr),
-						  sizeof(addr)),
-				  0);
+			          sizeof(addr)),
+		          0);
 		send(listener_fd, request.c_str(), request.size(), 0);
 
 		char buffer[1024]{};
@@ -233,10 +257,10 @@ TEST(HttpServerTest, HandleNonExistentGetRoute) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	std::string request = "GET /foo HTTP/1.1\r\n"
-						  "Host: localhost\r\n"
-						  "Connection: keep-alive\r\n"
-						  "Content-Length: 0\r\n"
-						  "\r\n";
+		"Host: localhost\r\n"
+		"Connection: keep-alive\r\n"
+		"Content-Length: 0\r\n"
+		"\r\n";
 
 	int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
 	ASSERT_EQ(
@@ -268,10 +292,10 @@ TEST(HttpServerTest, HandleNonExistentPostRoute) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	std::string request = "POST /foo HTTP/1.1\r\n"
-						  "Host: localhost\r\n"
-						  "Connection: keep-alive\r\n"
-						  "Content-Length: 0\r\n"
-						  "\r\n";
+		"Host: localhost\r\n"
+		"Connection: keep-alive\r\n"
+		"Content-Length: 0\r\n"
+		"\r\n";
 
 	int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
 	ASSERT_EQ(
@@ -299,10 +323,10 @@ TEST(HttpServerTest, HandleNonExistentHttpMethod) {
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	std::string request = "FOO /foo HTTP/1.1\r\n"
-						  "Host: localhost\r\n"
-						  "Connection: keep-alive\r\n"
-						  "Content-Length: 0\r\n"
-						  "\r\n";
+		"Host: localhost\r\n"
+		"Connection: keep-alive\r\n"
+		"Content-Length: 0\r\n"
+		"\r\n";
 
 	int listener_fd = socket(AF_INET, SOCK_STREAM, 0);
 	ASSERT_EQ(

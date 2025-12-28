@@ -9,9 +9,10 @@
 #include <string_view>
 
 HttpUtils::Route HttpParser::path_to_route(const std::string_view path) {
-	HttpUtils::Route route {};
+	HttpUtils::Route route{};
 	for (std::string_view segment : split_path(path)) {
-		if (segment.size() > 2 && segment.front() == '{' && segment.back() == '}') {
+		if (segment.size() > 2 && segment.front() == '{' && segment.back() ==
+		    '}') {
 			HttpUtils::RouteSegment route_segment = {
 				HttpUtils::RouteSegment::Type::Parameter,
 				std::string(segment.substr(1, segment.size() - 2))
@@ -35,8 +36,10 @@ HttpUtils::Route HttpParser::path_to_route(const std::string_view path) {
  * @param request request.path_params will be modified by match_route
  * @return
  */
-bool HttpParser::match_route(const HttpUtils::Route& route, HttpServer::Request& request) {
-	const std::vector<std::string_view> request_segments = split_path(request.route);
+bool HttpParser::match_route(const HttpUtils::Route &route,
+                             HttpServer::Request &request) {
+	const std::vector<std::string_view> request_segments = split_path(
+		request.route);
 
 	// Segment count must match
 	if (request_segments.size() != route.segments.size()) {
@@ -56,7 +59,8 @@ bool HttpParser::match_route(const HttpUtils::Route& route, HttpServer::Request&
 		}
 	}
 	for (size_t i = 0; i < route.segments.size(); ++i) {
-		if (route.segments[i].type == HttpUtils::RouteSegment::Type::Literal) continue;
+		if (route.segments[i].type == HttpUtils::RouteSegment::Type::Literal)
+			continue;
 
 		const HttpUtils::RouteSegment route_seg = route.segments[i];
 		const std::string_view req_seg = request_segments[i];
@@ -70,15 +74,15 @@ bool HttpParser::parse(const std::string_view buffer,
                        HttpServer::Request &out) {
 	size_t offset{0};
 	if (parse_method(buffer, out.method, offset) &&
-		parse_route(buffer, out.route, offset) &&
-		parse_body(buffer, out.body, offset)) {
+	    parse_route(buffer, out.route, offset) &&
+	    parse_body(buffer, out.body, offset)) {
 		return true;
 	}
 	return false;
 }
 
 bool HttpParser::parse_method(const std::string_view buffer,
-							  std::string_view &method, size_t &offset) {
+                              std::string_view &method, size_t &offset) {
 	offset = buffer.find(' ');
 	if (offset == std::string_view::npos) {
 		std::cerr << "Invalid request formatting: no spaces\n";
@@ -90,7 +94,7 @@ bool HttpParser::parse_method(const std::string_view buffer,
 }
 
 bool HttpParser::parse_route(const std::string_view buffer,
-							 std::string_view &route, size_t &offset) {
+                             std::string_view &route, size_t &offset) {
 	const size_t route_start_itr = offset;
 	offset = buffer.find(' ', route_start_itr);
 	if (offset == std::string_view::npos) {
@@ -103,11 +107,11 @@ bool HttpParser::parse_route(const std::string_view buffer,
 }
 
 bool HttpParser::parse_body(std::string_view buffer, std::string_view &body,
-							const size_t &offset) {
+                            const size_t &offset) {
 	size_t body_start_itr = buffer.find("\r\n\r\n", offset);
 	if (body_start_itr == std::string_view::npos) {
 		std::cerr << "Invalid request formatting: the start of the request "
-					 "body is malformed\n";
+			"body is malformed\n";
 		return false;
 	}
 	body_start_itr += 4;
@@ -116,8 +120,8 @@ bool HttpParser::parse_body(std::string_view buffer, std::string_view &body,
 }
 
 std::vector<std::string_view> HttpParser::split_path(std::string_view path) {
-    std::vector<std::string_view> segments;
-    size_t start = 0;
+	std::vector<std::string_view> segments;
+	size_t start = 0;
 
 	// If there is only the root '/' for the client request
 	if (path == "/") {
@@ -125,23 +129,23 @@ std::vector<std::string_view> HttpParser::split_path(std::string_view path) {
 		return segments;
 	}
 
-    while (start < path.size()) {
-        if (path[start] == '/') {
-            ++start;
-            continue;
-        }
+	while (start < path.size()) {
+		if (path[start] == '/') {
+			++start;
+			continue;
+		}
 
-        size_t end = path.find('/', start);
+		size_t end = path.find('/', start);
 
-        // found the last segment
-        if (end == std::string_view::npos) {
-            segments.push_back(path.substr(start));
-            break;
-        }
+		// found the last segment
+		if (end == std::string_view::npos) {
+			segments.push_back(path.substr(start));
+			break;
+		}
 
-        segments.push_back(path.substr(start, end - start));
-        start = end;
-    }
+		segments.push_back(path.substr(start, end - start));
+		start = end;
+	}
 
-    return segments;
+	return segments;
 }
