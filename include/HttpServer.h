@@ -1,90 +1,118 @@
 #pragma once
 
+#include "AtomicQueue.h"
+#include "PathParams.h"
+#include "Route.h"
+
+#include <atomic>
 #include <functional>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
-#include <string>
-#include <atomic>
-#include <string_view>
-#include "../include/AtomicQueue.h"
 
 class HttpServer {
-public:
-    HttpServer();
+  public:
+	HttpServer();
 
-    ~HttpServer();
+	~HttpServer();
 
-    std::atomic<bool> stop_flag {};
+	std::atomic<bool> stop_flag{};
 
-    struct Request {
-        std::string_view route;
-        std::string body;
-    };
+	struct Request {
+		PathParams path_params;
+		std::string_view method;
+		std::string_view route;
+		std::string_view body;
+	};
 
-    struct Response {
-        std::string_view header;
-        std::string body;
-        int status;
-    };
+	struct Response {
+		std::string_view header;
+		std::string body;
+		std::string status_name;
+		std::string str() {
+			std::stringstream ss;
+			ss << "HTTP/1.1 " << status << " " << status_name << " \r\n";
+			ss << "Content-Length: " << body.size() << "\r\n";
+			ss << "Connection: close\r\n\r\n";
+			ss << body;
+			return ss.str();
+		}
+		int status; // e.g. 200, 404, 500
+	};
 
-    using Handler = std::function<void(const Request&, Response&)>;
+	using Handler = std::function<void(Request &, Response &)>;
 
-    void get_mapping(std::string_view route, const Handler& fn);
+	static bool is_valid_request(std::string &request_buffer,
+								 ssize_t bytes_read);
 
-    void post_mapping(std::string_view route, const Handler& fn);
+	void get_mapping(std::string_view route, const Handler &fn);
 
-    void put_mapping(std::string_view route, const Handler& fn);
+	void post_mapping(std::string_view route, const Handler &fn);
 
-    void patch_mapping(std::string_view route, const Handler& fn);
+	void put_mapping(std::string_view route, const Handler &fn);
 
-    void delete_mapping(std::string_view route, const Handler& fn);
+	void patch_mapping(std::string_view route, const Handler &fn);
 
-    void head_mapping(std::string_view route, const Handler& fn);
+	void delete_mapping(std::string_view route, const Handler &fn);
 
-    void options_mapping(std::string_view route, const Handler& fn);
+	void head_mapping(std::string_view route, const Handler &fn);
 
-    void connect_mapping(std::string_view route, const Handler& fn);
+	void options_mapping(std::string_view route, const Handler &fn);
 
-    void trace_mapping(std::string_view route, const Handler& fn);
+	void connect_mapping(std::string_view route, const Handler &fn);
 
-    /**
-     * Tells the server to start listening/accepting requests from a specified port. This function is blocking.
-     */
-    void listen(int port);
+	void trace_mapping(std::string_view route, const Handler &fn);
 
-    /**
-     * Initializes a thread to start listening/accepting requests from a specified port. This function is non-blocking,
-     * so only use one active `listen()` or `start_listening()` method call for any given time.
-     */
-    void start_listening(int port);
+	/**
+	 * Tells the server to start listening/accepting requests from a specified
+	 * port. This function is blocking.
+	 */
+	void listen(int port);
 
-    /**
-     * Tells the server to stop listening/accepting requests.
-     */
-    void stop_listening();
+	/**
+	 * Initializes a thread to start listening/accepting requests from a
+	 * specified port. This function is non-blocking, so only use one active
+	 * `listen()` or `start_listening()` method call for any given time.
+	 */
+	void start_listening(int port);
 
-private:
-    AtomicQueue<int> queue;
+	/**
+	 * Tells the server to stop listening/accepting requests.
+	 */
+	void stop_listening();
 
-    std::vector<std::thread> threads;
+  private:
+	AtomicQueue<int> queue;
 
-    std::unordered_map<std::string_view, std::unordered_map<std::string_view, Handler>> routes;
+	std::vector<std::thread> threads;
 
-    void store_conn_fd(int conn_fd);
+	std::unordered_map<std::string_view,
+					   std::vector<std::pair<HttpUtils::Route, Handler>>>
+		routes;
 
-    int listener_fd {-1};
+	// <method, route>
+	// std::unordered_map<std::string_view, std::vector<Route>> routes;
 
-    /*
-     * @brief return a listener socket file descriptor
-     */
-    int get_listener_socket(int port);
+	std::unordered_map<std::string_view, std::vector<std::string_view>>
+		route_path_params;
 
-    /**
-        * @brief Should be passed into a thread() worker to send a response back to an HTTP client.
-        *        A side-effect is that it will toggle the occupancy in the thread_pool_occupied member array
-        * @param thread_pool_id Tells the SendResponse function which array index to toggle in the thread_pool_occupied array
-        * @param conn_file_descriptor Used to send the response through the associated socket
-        */
-    void handle_client();
+	void store_conn_fd(int conn_fd);
 
+	int listener_fd{-1};
+
+	std::string_view get_method(int conn_fd, std::string_view path,
+								size_t &method_itr, bool &continues);
+
+	/*
+	 * @brief return a listener socket file descriptor
+	 */
+	static int get_listener_socket(int port);
+
+	/**
+	 * @brief Should be passed into a thread() worker to send a response back to
+	 * an HTTP client.
+	 */
+	void handle_client();
 };

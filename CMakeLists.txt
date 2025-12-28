@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(http_server VERSION 1.0 LANGUAGES CXX)
+project(http_server VERSION 1.0 LANGUAGES C CXX)
 
 set(LIBRARY "server_library")
 set(TEST_TARGET "server_tests_bin")
@@ -13,9 +13,14 @@ find_package(Threads REQUIRED)
 # server library
 add_library(${LIBRARY}
         src/HttpServer.cpp
+        src/HttpParser.cpp
+        src/PathParams.cpp
         include/HttpServer.h
         include/AtomicQueue.h
         include/constants.h
+        include/HttpParser.h
+        include/PathParams.h
+        include/Route.h
 )
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)
@@ -25,7 +30,10 @@ target_link_libraries(${LIBRARY} PRIVATE Threads::Threads)
 
 # unit tests executable
 enable_testing()
-add_executable(${TEST_TARGET} test/HttpServerTest.cpp)
+add_executable(${TEST_TARGET}
+    test/HttpServerTest.cpp
+    test/HttpParserTest.cpp
+)
 target_link_libraries(${TEST_TARGET}
         PRIVATE ${LIBRARY} GTest::gtest_main
 )
