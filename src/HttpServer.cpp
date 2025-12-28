@@ -37,7 +37,6 @@ HttpServer::~HttpServer() {
 	this->stop_listening();
 	for (auto &thread : threads) {
 		thread.join();
-		// std::cout << "thread removed: " << i << "\n";
 	}
 	threads.clear();
 }
@@ -147,57 +146,62 @@ void HttpServer::handle_client() {
 		case compile_time_method_hash("CONNECT"):
 		case compile_time_method_hash("TRACE"): {
 			req.body = "";
-			if (routes[req.method].find(req.route) !=
-				routes[req.method].end()) {
-				Handler route_fn = routes[req.method][req.route];
-				route_fn(req, res);
-				response = "HTTP/1.1 200 OK\r\n"
-						   "Content-Length: " +
-						   std::to_string(res.body.size()) +
-						   "\r\n"
-						   "Connection: close\r\n"
-						   "\r\n" +
-						   std::string(res.body);
-			} else {
-				res.body =
-					R"({"error": "The requested API route does not exist"})";
-				response = "HTTP/1.1 404 Not Found\r\n"
-						   "Content-Length: " +
-						   std::to_string(res.body.size()) +
-						   "\r\n"
-						   "Connection: close\r\n"
-						   "\r\n" +
-						   std::string(res.body);
+			bool is_ok = false;
+			for (const auto& [route, route_fn] : routes[req.method]) {
+				if (HttpParser::match_route(route, req)) {
+					// when the route is matched, fn should run and allow fn definitions to use pathParams
+					is_ok = true;
+					route_fn(req, res);
+					response = "HTTP/1.1 200 OK\r\n"
+							   "Content-Length: " +
+							   std::to_string(res.body.size()) +
+							   "\r\n"
+							   "Connection: close\r\n"
+							   "\r\n" +
+							   std::string(res.body);
+					break;
+				}
 			}
-			break;
+			if (is_ok) break;
+			res.body =
+				R"({"error": "The requested endpoint does not exist"})";
+			response = "HTTP/1.1 404 Not Found\r\n"
+					   "Content-Length: " +
+					   std::to_string(res.body.size()) +
+					   "\r\n"
+					   "Connection: close\r\n"
+					   "\r\n" +
+					   std::string(res.body);
 		}
 		case compile_time_method_hash("POST"):
 		case compile_time_method_hash("PUT"):
 		case compile_time_method_hash("PATCH"): {
-			if (routes[req.method].find(req.route) !=
-				routes[req.method].end()) {
-				Handler route_fn = routes[req.method][req.route];
-				if (route_fn != nullptr) {
+			bool is_ok = false;
+			for (const auto& [route, route_fn] : routes[req.method]) {
+				if (HttpParser::match_route(route, req)) {
+					// when the route is matched, fn should run and allow fn definitions to use pathParams
+					is_ok = true;
 					route_fn(req, res);
+					response = "HTTP/1.1 200 OK\r\n"
+							   "Content-Length: " +
+							   std::to_string(res.body.size()) +
+							   "\r\n"
+							   "Connection: close\r\n"
+							   "\r\n" +
+							   std::string(res.body);
+					break;
 				}
-				response = "HTTP/1.1 200 OK\r\n"
-						   "Content-Length: " +
-						   std::to_string(res.body.size()) +
-						   "\r\n"
-						   "Connection: close\r\n"
-						   "\r\n" +
-						   std::string(res.body);
-			} else {
-				res.body =
-					R"({\"error\": \"The requested endpoint does not exist\"})";
-				response = "HTTP/1.1 404 Not Found\r\n"
-						   "Content-Length: " +
-						   std::to_string(res.body.size()) +
-						   "\r\n"
-						   "Connection: close\r\n"
-						   "\r\n" +
-						   std::string(res.body);
 			}
+			if (is_ok) break;
+			res.body =
+				R"({"error": "The requested endpoint does not exist"})";
+			response = "HTTP/1.1 404 Not Found\r\n"
+					   "Content-Length: " +
+					   std::to_string(res.body.size()) +
+					   "\r\n"
+					   "Connection: close\r\n"
+					   "\r\n" +
+					   std::string(res.body);
 			break;
 		}
 		default: {
@@ -296,42 +300,42 @@ int HttpServer::get_listener_socket(const int port) {
 }
 
 void HttpServer::get_mapping(const std::string_view route, const Handler &fn) {
-	routes["GET"][route] = fn;
+	routes["GET"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::post_mapping(const std::string_view route, const Handler &fn) {
-	routes["POST"][route] = fn;
+	routes["POST"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::put_mapping(const std::string_view route, const Handler &fn) {
-	routes["PUT"][route] = fn;
+	routes["PUT"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::patch_mapping(const std::string_view route,
 							   const Handler &fn) {
-	routes["PATCH"][route] = fn;
+	routes["PATCH"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::delete_mapping(const std::string_view route,
 								const Handler &fn) {
-	routes["DELETE"][route] = fn;
+	routes["DELETE"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::head_mapping(const std::string_view route, const Handler &fn) {
-	routes["HEAD"][route] = fn;
+	routes["HEAD"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::options_mapping(const std::string_view route,
 								 const Handler &fn) {
-	routes["OPTIONS"][route] = fn;
+	routes["OPTIONS"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::connect_mapping(const std::string_view route,
 								 const Handler &fn) {
-	routes["CONNECT"][route] = fn;
+	routes["CONNECT"].emplace_back(HttpParser::path_to_route(route), fn);
 }
 
 void HttpServer::trace_mapping(const std::string_view route,
 							   const Handler &fn) {
-	routes["TRACE"][route] = fn;
+	routes["TRACE"].emplace_back(HttpParser::path_to_route(route), fn);
 }

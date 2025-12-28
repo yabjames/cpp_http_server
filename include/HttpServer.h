@@ -32,7 +32,7 @@ class HttpServer {
 		int status;
 	};
 
-	using Handler = std::function<void(const Request &, Response &)>;
+	using Handler = std::function<void(Request &, Response &)>;
 
 	static bool is_valid_request(std::string &request_buffer,
 								 ssize_t bytes_read);
@@ -81,6 +81,9 @@ class HttpServer {
 	std::unordered_map<std::string_view,
 					   std::vector<std::pair<HttpUtils::Route, Handler>>>
 		routes;
+
+	// <method, route>
+	// std::unordered_map<std::string_view, std::vector<Route>> routes;
 
 	std::unordered_map<std::string_view, std::vector<std::string_view>>
 		route_path_params;
