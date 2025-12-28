@@ -1,7 +1,7 @@
 #pragma once
 
 #include "HttpServer.h"
-#include "HttpUtils.h"
+#include "Route.h"
 
 #include <string_view>
 #include <vector>
@@ -9,12 +9,11 @@
 class HttpParser {
   public:
 	static bool match_route(
-		const Route& route,
-		std::string_view request_path,
-		std::vector<PathParam>& out_params
+		const HttpUtils::Route& route,
+		HttpServer::Request& request
 	);
 
-	static Route compile_route(std::string_view path);
+	static HttpUtils::Route path_to_route(std::string_view path);
 
 	static bool parse(std::string_view buffer, HttpServer::Request &out);
 

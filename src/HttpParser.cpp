@@ -8,21 +8,22 @@
 #include <iostream>
 #include <string_view>
 
-HttpParser::Route HttpParser::compile_route(const std::string_view path) {
-	Route route {};
+HttpUtils::Route HttpParser::path_to_route(const std::string_view path) {
+	HttpUtils::Route route {};
 	for (std::string_view segment : split_path(path)) {
 		if (segment.size() > 2 && segment.front() == '{' && segment.back() == '}') {
-			RouteSegment route_segment = {
-				RouteSegment::Type::Parameter,
+			HttpUtils::RouteSegment route_segment = {
+				HttpUtils::RouteSegment::Type::Parameter,
 				std::string(segment.substr(1, segment.size() - 2))
 			};
 			route.segments.push_back(route_segment);
+		} else {
+			HttpUtils::RouteSegment route_segment = {
+				HttpUtils::RouteSegment::Type::Literal,
+				std::string(segment)
+			};
+			route.segments.push_back(route_segment);
 		}
-		RouteSegment route_segment = {
-			RouteSegment::Type::Literal,
-			std::string(segment)
-		};
-		route.segments.push_back(route_segment);
 	}
 
 	return route;
