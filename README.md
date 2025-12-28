@@ -149,7 +149,7 @@ The project includes a GitHub Actions workflow that automatically:
 
 ### Automated gtest Execution (GitHub Actions)
 
-![gtest CI Run](docs/images/github-actions-gtest.png)
+<img src="doc_images/gtest.png" alt="gtest CI Run" height="400">
 
 ---
 
@@ -157,7 +157,7 @@ The project includes a GitHub Actions workflow that automatically:
 
 Development tasks and progress are tracked using a **GitHub Projects Kanban board**.
 
-![GitHub Projects Kanban Board](<img width="1650" height="808" alt="Screenshot From 2025-12-28 14-41-34" src="https://github.com/user-attachments/assets/1ee4a64d-24cd-45fa-8547-e16958f5e970" />)
+<img src="doc_images/kanban.png" alt="github projects kanban board" height="400">
 
 ---
 
