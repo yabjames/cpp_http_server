@@ -7,6 +7,7 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 ## Table of Contents
 
 * [Features](#features)
+* [Usage](#usage)
 * [Project Structure](#project-structure)
 * [Building the Source Code](#building-the-source-code)
 
@@ -16,8 +17,8 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 * [Code Coverage](#code-coverage)
 * [CI / GitHub Actions](#ci--github-actions)
 * [Project Management](#project-management)
-* [Lessons Learned](#lessons-learned)
-* [Future Improvements](#future-improvements)
+* [Key Skills/Lessons Learned](#key-skillslessons-learned)
+* [Challenges](#challenges)
 
 ---
 
@@ -156,7 +157,7 @@ The project includes a GitHub Actions workflow that automatically:
 
 Development tasks and progress are tracked using a **GitHub Projects Kanban board**.
 
-![GitHub Projects Kanban Board](docs/images/github-projects-kanban.png)
+![GitHub Projects Kanban Board](<img width="1650" height="808" alt="Screenshot From 2025-12-28 14-41-34" src="https://github.com/user-attachments/assets/1ee4a64d-24cd-45fa-8547-e16958f5e970" />)
 
 ---
 
@@ -182,14 +183,10 @@ C++ specific lessons learned:
   * exception usage instead of C-style exits, thread sleeping (std::this_thread::sleep_for)
 * Use `string_view` to avoid copying an entire `string` object
 
-Challenges:
+---
+
+## Challenges:
 * Implementing C++ practices while utilizing the Linux port library written in C
   * I had to encapsulate many parts of the C-specific library functions and employ RAII-style C++ objects (ex: closing ports before deconstruction)
 * Designing a routing system that allows a programmer to easily map a function pointer to a route 
 * Refactoring the routing system to allow for path parameters
-
----
-
-## License
-
-MIT License
