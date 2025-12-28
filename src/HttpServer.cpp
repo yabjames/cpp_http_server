@@ -146,78 +146,46 @@ void HttpServer::handle_client() {
 		case compile_time_method_hash("CONNECT"):
 		case compile_time_method_hash("TRACE"): {
 			req.body = "";
-			bool is_ok = false;
 			for (const auto& [route, route_fn] : routes[req.method]) {
 				if (HttpParser::match_route(route, req)) {
 					// when the route is matched, fn should run and allow fn definitions to use pathParams
-					is_ok = true;
+					res.status = 200;
+					res.status_name = "OK";
 					route_fn(req, res);
-					response = "HTTP/1.1 200 OK\r\n"
-							   "Content-Length: " +
-							   std::to_string(res.body.size()) +
-							   "\r\n"
-							   "Connection: close\r\n"
-							   "\r\n" +
-							   std::string(res.body);
 					break;
 				}
 			}
-			if (is_ok) break;
-			res.body =
-				R"({"error": "The requested endpoint does not exist"})";
-			response = "HTTP/1.1 404 Not Found\r\n"
-					   "Content-Length: " +
-					   std::to_string(res.body.size()) +
-					   "\r\n"
-					   "Connection: close\r\n"
-					   "\r\n" +
-					   std::string(res.body);
+			if (res.status == 200) break;
+			res.status = 404;
+			res.status_name = "Not Found";
+			res.body = R"({"error": "The requested endpoint does not exist"})";
 		}
 		case compile_time_method_hash("POST"):
 		case compile_time_method_hash("PUT"):
 		case compile_time_method_hash("PATCH"): {
-			bool is_ok = false;
 			for (const auto& [route, route_fn] : routes[req.method]) {
 				if (HttpParser::match_route(route, req)) {
 					// when the route is matched, fn should run and allow fn definitions to use pathParams
-					is_ok = true;
+					res.status = 200;
+					res.status_name = "OK";
 					route_fn(req, res);
-					response = "HTTP/1.1 200 OK\r\n"
-							   "Content-Length: " +
-							   std::to_string(res.body.size()) +
-							   "\r\n"
-							   "Connection: close\r\n"
-							   "\r\n" +
-							   std::string(res.body);
 					break;
 				}
 			}
-			if (is_ok) break;
-			res.body =
-				R"({"error": "The requested endpoint does not exist"})";
-			response = "HTTP/1.1 404 Not Found\r\n"
-					   "Content-Length: " +
-					   std::to_string(res.body.size()) +
-					   "\r\n"
-					   "Connection: close\r\n"
-					   "\r\n" +
-					   std::string(res.body);
+			if (res.status == 200) break;
+			res.status = 404;
+			res.status_name = "Not Found";
+			res.body = R"({"error": "The requested endpoint does not exist"})";
 			break;
 		}
 		default: {
-			res.body =
-				R"({\"error\": \"The request does not have a valid HTTP method\"})";
-			response = "HTTP/1.1 500 Error\r\n"
-					   "Content-Length: " +
-					   std::to_string(res.body.size()) +
-					   "\r\n"
-					   "Connection: close\r\n"
-					   "\r\n" +
-					   std::string(res.body);
+			res.status = 500;
+			res.status_name = "Error";
+			res.body = R"({\"error\": \"The request does not have a valid HTTP method\"})";
 		}
 		}
 		const ssize_t bytes_sent =
-			send(conn_fd, response.c_str(), response.size(), 0);
+			send(conn_fd, res.str().c_str(), res.str().size(), 0);
 		if (bytes_sent == -1) {
 			close(conn_fd);
 			std::cerr << "\n\n"

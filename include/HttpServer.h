@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <functional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -20,16 +21,25 @@ class HttpServer {
 	std::atomic<bool> stop_flag{};
 
 	struct Request {
+		PathParams path_params;
 		std::string_view method;
 		std::string_view route;
 		std::string_view body;
-		PathParams path_params;
 	};
 
 	struct Response {
 		std::string_view header;
 		std::string body;
-		int status;
+		std::string status_name;
+		std::string str() {
+			std::stringstream ss;
+			ss << "HTTP/1.1 " << status << " " << status_name << " \r\n";
+			ss << "Content-Length: " << body.size() << "\r\n";
+			ss << "Connection: close\r\n\r\n";
+			ss << body;
+			return ss.str();
+		}
+		int status; // e.g. 200, 404, 500
 	};
 
 	using Handler = std::function<void(Request &, Response &)>;
