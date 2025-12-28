@@ -145,7 +145,7 @@ The project includes a GitHub Actions workflow that automatically:
 
 ### Coverage Report (GitHub Actions)
 
-![lcov Coverage Report](docs/images/github-actions-lcov.png)
+<img src="doc_images/coverage.png" alt="lcov coverage report" height="400">
 
 ### Automated gtest Execution (GitHub Actions)
 
