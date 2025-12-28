@@ -31,9 +31,12 @@ TEST(HttpParserTest, ShouldHavePathParameters) {
 	try {
 		HttpServer server{};
 		server.get_mapping(
-			"/foo/{id}", [](HttpServer::Request &req,
+			"/foo/{id}/{user}", [](HttpServer::Request &req,
 					   HttpServer::Response &res) {
-				res.body = req.path_params.get_path_param("id").value();
+				std::stringstream ss;
+				ss << "id: " << req.path_params.get_path_param("id").value() << "\n";
+				ss << "user: " << req.path_params.get_path_param("user").value() << "\n";
+				res.body = ss.str();
 			}
 		);
 
@@ -52,7 +55,7 @@ TEST(HttpParserTest, ShouldHavePathParameters) {
 			connect(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)),
 			0);
 
-		const std::string request = "GET /foo/123 HTTP/1.1\r\n"
+		const std::string request = "GET /foo/123/james HTTP/1.1\r\n"
 							  "Host: localhost\r\n"
 							  "Connection: keep-alive\r\n"
 							  "Content-Length: 5\r\n"
@@ -66,7 +69,8 @@ TEST(HttpParserTest, ShouldHavePathParameters) {
 		const std::string result = std::string(buffer);
 
 		EXPECT_GT(bytes, 0);
-		ASSERT_TRUE(result.find("123") != std::string::npos);
+		EXPECT_TRUE(result.find("id: 123") != std::string::npos);
+		EXPECT_TRUE(result.find("user: james") != std::string::npos);
 
 		close(sock);
 	} catch (const std::exception &e) {
