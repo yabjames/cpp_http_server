@@ -6,7 +6,7 @@ set(TEST_TARGET "server_tests_bin")
 set(TARGET "server_impl_bin")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 
