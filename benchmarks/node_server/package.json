@@ -1,0 +1,26 @@
+{
+  "name": "cpp_http_server",
+  "version": "1.0.0",
+  "description": "A modern C++ HTTP server implementation with routing, testing, and CI-driven quality checks.",
+  "main": "k6.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yabjames/cpp_http_server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yabjames/cpp_http_server/issues"
+  },
+  "homepage": "https://github.com/yabjames/cpp_http_server#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
