@@ -57,7 +57,7 @@ target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
 find_program(LCOV lcov REQUIRED)
 find_program(GENHTML genhtml REQUIRED)
 
-# add coverage target
+# add coverage target for gcc build
 add_custom_target(coverage
         # gather data
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeFiles/server_library.dir/src
