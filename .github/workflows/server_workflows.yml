@@ -32,7 +32,7 @@ jobs:
       - name: Coverage
         shell: bash
         run: |
-          cd build/Release
+          cd build/Debug
           make coverage
 
       - name: Report Code Coverage
