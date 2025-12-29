@@ -15,6 +15,7 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 * [Using Nix](#using-nix)
 * [Building the Source Code](#building-the-source-code)
     * [Building for Release Mode](#building-for-release-mode)
+    * [Building for Debug Mode](#building-for-debug-mode)
 * [Running the Server](#running-the-server)
 * [Running the Tests](#running-the-tests)
 * [Code Coverage](#code-coverage)
@@ -77,7 +78,7 @@ The cpp_http_server is ~1.562x faster in throughput or about 56.2% higher reques
 Calculation: 27,366.734925 RPS / 17,524.167725 RPS = ~1.5612
 
 | Metric             | **C++ Server**    | **Node + Express** |
-| ------------------ | ----------------- | ------------------ |
+|--------------------|-------------------|--------------------|
 | Target rate        | 30,000.00 RPS     | 30,000.00 RPS      |
 | Actual RPS         | 27,366.734925 RPS | 17,524.167725 RPS  |
 | Total requests     | 280,791           | 176,924            |
@@ -171,7 +172,13 @@ This project uses **Conan** for dependency management and **CMake** for builds.
 ### Building for Release Mode
 
 ```bash
-conan build . --build=missing
+conan build . --build=missing -s build_type=Release
+```
+
+### Building for Debug Mode
+
+```bash
+conan build . --build=missing -s build_type=Debug
 ```
 
 ---
@@ -183,6 +190,9 @@ Command to run the HTTP server implementation example:
 ```bash
 # in release mode
 ./build/Release/server_impl_bin
+
+# in debug mode
+./build/Debug/server_impl_bin
 ```
 
 ---
@@ -193,7 +203,7 @@ Command to execute the automated test suite:
 
 ```bash
 # run tests
-./build/Release/server_tests_bin
+./build/Debug/server_tests_bin
 ```
 
 ---
@@ -205,14 +215,14 @@ Coverage reports are generated using **lcov**.
 ### Generate Coverage Reports
 
 ```bash
-make -C build/Release coverage
+make -C build/Debug coverage
 ```
 
 ### Open the Coverage Report
 
 ```bash
 # specific to Linux
-xdg-open build/Release/CMakeFiles/server_library.dir/src/out/index.html
+xdg-open build/Debug/CMakeFiles/server_library.dir/src/out/index.html
 ```
 
 ---
