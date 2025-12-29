@@ -7,6 +7,8 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 ## Table of Contents
 
 * [Features](#features)
+* [Benchmark Results](#benchmark-results)
+* [Benchmark Comparison](#benchmark-comparison-cpp_http_server-versus-express-server)
 * [Usage](#usage)
 * [Project Structure](#project-structure)
 * [Using Docker](#using-docker)
@@ -37,6 +39,58 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 * **Docker** for reproducible builds and containerization
 * **Nix flake** for reproducible development environments
 * **Project tracking** using GitHub Projects (Kanban board)
+
+---
+
+## Benchmark Results
+
+This project was benchmarked using k6 to evaluate HTTP request throughput, latency, and stability under sustained load. It sustained ~27,000 RPS locally with p99 < 30 ms (using a Ryzen 5 5600G). Keep in mind, that this was a local benchmark that does not reflect real networks and it does not utilize TLS, auth, databases, or disk usage. Check out `benchmarks/benchmark-results.txt` to see the benchmark results captured with k6. 
+
+### Test Setup
+
+Load generator: k6 (local execution)
+Scenario: `constant_request_rate`
+Target rate: 30,000 requests/second
+Duration: 10 seconds
+Max VUs: 20,000 (only reached a maximum of 945 VUs)
+
+Client machine:
+AMD Ryzen 5 5600G (local Linux system)
+
+The load generator and server were executed locally. As a result, the benchmark reflects the combined limits of the server and the client machine.
+
+### Interpretation
+
+- The server maintained low and stable latency even at very high request rates.
+- No errors or timeouts occurred, indicating the server was not saturated.
+- The test experienced dropped iterations, which suggests the benchmark was limited by the local load generator and PC hardware, not the server itself.
+
+As such, these results demonstrate that the server can reliably handle at least ~27k requests per second on the tested hardware.
+
+## Benchmark Comparison (cpp_http_server versus Express server)
+
+I made sure that the node express server implemented multi-threading to provide a more fair comparison with the cpp_http_server.
+Check out `benchmarks/node_server` to see the node express server implementation.
+
+The cpp_http_server is ~1.562x faster in throughput or about 56.2% higher request rate. 
+
+Calculation: 27,366.734925 RPS / 17,524.167725 RPS = ~1.5612
+
+| Metric             | **C++ Server**    | **Node + Express** |
+| ------------------ | ----------------- | ------------------ |
+| Target rate        | 30,000.00 RPS     | 30,000.00 RPS      |
+| Actual RPS         | 27,366.734925 RPS | 17,524.167725 RPS  |
+| Total requests     | 280,791           | 176,924            |
+| Dropped iterations | 19,214            | 123,126            |
+| Average latency    | 5.47 ms           | 46.88 ms           |
+| Median latency     | 3.44 ms           | 34.1 ms            |
+| p90 latency        | 13.55 ms          | 103.24 ms          |
+| p95 latency        | 17.34 ms          | 132.88 ms          |
+| p99 latency        | 26.06 ms          | 192.68 ms          |
+| Max latency        | 219.18 ms         | 445.75 ms          |
+| Error rate         | 0.00%             | 0.00%              |
+| Peak VUs           | 945               | 1,693              |
+| Iterations/sec     | 27,366.734925     | 17,524.167725      |
 
 ---
 
