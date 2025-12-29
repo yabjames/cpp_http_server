@@ -24,20 +24,20 @@ jobs:
           conan_audit_token: ${{ secrets.CONAN_AUDIT_TOKEN }}
 
       - name: Install Conan dependencies
-        run: conan build . --build=missing
+        run: conan build . --build=missing -s build_type=Debug
 
       - name: Run GTest
-        run: ctest --test-dir build/Release
+        run: ctest --test-dir build/Debug
 
       - name: Coverage
         shell: bash
         run: |
-          cd build/Release
+          cd build/Debug
           make coverage
 
       - name: Report Code Coverage
         uses: zgosalvez/github-actions-report-lcov@v4
         with:
-          coverage-files: build/Release/CMakeFiles/server_library.dir/src/coverage.info
+          coverage-files: build/Debug/CMakeFiles/server_library.dir/src/coverage.info
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
