@@ -9,8 +9,9 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 * [Features](#features)
 * [Usage](#usage)
 * [Project Structure](#project-structure)
+* [Using Docker](#using-docker)
+* [Using Nix](#using-nix)
 * [Building the Source Code](#building-the-source-code)
-
     * [Building for Release Mode](#building-for-release-mode)
 * [Running the Server](#running-the-server)
 * [Running the Tests](#running-the-tests)
@@ -33,6 +34,8 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
     * Build verification
     * Automated test execution
     * Coverage report generation
+* **Docker** for reproducible builds and containerization
+* **Nix flake** for reproducible development environments
 * **Project tracking** using GitHub Projects (Kanban board)
 
 ---
@@ -45,20 +48,24 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 HttpServer server{};
 
 server.get_mapping(
-    "/test", [](const HttpServer::Request &, HttpServer::Response &res) {
+    "/test", [](HttpServer::Request &req, HttpServer::Response &res) {
         res.body = "testing new api route";
     });
 
-server.post_mapping(
-    "/test2/{id}", [](const HttpServer::Request &, HttpServer::Response &res) {
-        std::stringstream ss;
-        try {
-            ss << req.path_params.get_path_param("id").value() << "\n";
-            res.body = ss.str();
-        } catch (const std::bad_optional_access &e) {
-            res.body = "could not get path parameter foo";
-        }
-    });
+	server.post_mapping(
+		"/test2/{id}/foo/{user}",
+		[](HttpServer::Request &req, HttpServer::Response &res) {
+			std::stringstream ss;
+			try {
+				ss << "{\"id\":" << "\"" << req.path_params.get_path_param("id").value() << "\","
+				<< "\"user\":" << "\"" << req.path_params.get_path_param("user").value() << "\""
+				<< "}";
+				res.body = ss.str();
+			} catch (const std::bad_optional_access &e) {
+				res.body = "could not get path parameter";
+			}
+		});
+
 
 try {
     server.listen(3490); // use any port you like
@@ -81,6 +88,27 @@ try {
 ```
 
 ---
+
+## Using Docker
+
+```bash
+# build the docker image
+docker build -t cpp_http_server . 
+
+# run a container in interactive mode
+# discards after use
+docker run --rm -it cpp_http_server
+```
+
+---
+
+## Using Nix
+
+The `flake.nix` can only be used if your system has the Nix package manager with flakes enabled.
+
+```bash
+nix develop
+```
 
 ## Building the Source Code
 
