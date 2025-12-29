@@ -12,6 +12,9 @@
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
         git
+        k6
+
+	nodejs
 
         gcc
         lcov
