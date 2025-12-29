@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --exclude=build/ . .
 
 # Build with Conan
-RUN conan build . --build=missing
+RUN conan build . --build=missing -s build_type=Release
 
 
 CMD ["/bin/bash"]
