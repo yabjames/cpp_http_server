@@ -216,5 +216,6 @@ C++ specific lessons learned:
 ## Challenges:
 * Implementing C++ practices while utilizing the Linux port library written in C
   * I had to encapsulate many parts of the C-specific library functions and employ RAII-style C++ objects (ex: closing ports before deconstruction)
-* Designing a routing system that allows a programmer to easily map a function pointer to a route 
+* Designing a routing system that allows a programmer to easily map a function pointer to a route
+* Designing the routing system to pick up path parameter values from client requests
 * Refactoring the routing system to allow for path parameters
