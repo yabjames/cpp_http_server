@@ -6,6 +6,12 @@ set(TEST_TARGET "server_tests_bin")
 set(TARGET "server_impl_bin")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Override Debug flags
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0 --coverage")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "--coverage")
+set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "--coverage")
+
 find_package(GTest CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -24,15 +30,14 @@ add_library(${LIBRARY}
 )
 target_include_directories(${LIBRARY} PUBLIC include)
 target_compile_features(${LIBRARY} PRIVATE cxx_std_17)
-target_compile_options(${LIBRARY} PRIVATE -O0 -g --coverage)
 target_link_libraries(${LIBRARY} PRIVATE Threads::Threads)
 
 
 # unit tests executable
 enable_testing()
 add_executable(${TEST_TARGET}
-    test/HttpServerTest.cpp
-    test/HttpParserTest.cpp
+        test/HttpServerTest.cpp
+        test/HttpParserTest.cpp
 )
 target_link_libraries(${TEST_TARGET}
         PRIVATE ${LIBRARY} GTest::gtest_main
@@ -40,17 +45,15 @@ target_link_libraries(${TEST_TARGET}
 
 include(GoogleTest)
 gtest_discover_tests(${TEST_TARGET})
-target_compile_options(${TEST_TARGET} PRIVATE -g -O0 -g --coverage)
-target_link_options(${TEST_TARGET} PRIVATE -O0 -g --coverage)
 
 
 # server implementation executable
 add_executable(${TARGET}
         src/main.cpp
 )
-target_compile_options(${TARGET} PRIVATE -g -O0 -g --coverage)
 target_link_options(${TARGET} PRIVATE -O0 -g --coverage)
 target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
+
 
 # coverage target
 # find required tools
