@@ -45,7 +45,7 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 
 ## Benchmark Results
 
-This project was benchmarked using k6 to evaluate HTTP request throughput, latency, and stability under sustained load. It sustained ~27,000 RPS locally with p99 < 30 ms (using a Ryzen 5 5600G). Keep in mind, that this was a local benchmark that does not reflect real networks and it does not utilize TLS, auth, databases, or disk usage. Check out `benchmarks/benchmark-results.txt` to see the benchmark results captured with k6. 
+This project was benchmarked using k6 to evaluate HTTP request throughput, latency, and stability under sustained load. It sustained ~29,600 RPS locally with p99 < 7 ms (using a Ryzen 5 5600G). Keep in mind, that this was a local benchmark that does not reflect real networks and it does not utilize TLS, auth, databases, or disk usage. Check out `benchmarks/benchmark-results.txt` to see the benchmark results captured with k6. 
 
 ### Test Setup
 
@@ -73,25 +73,26 @@ As such, these results demonstrate that the server can reliably handle at least 
 I made sure that the node express server implemented multi-threading to provide a more fair comparison with the cpp_http_server.
 Check out `benchmarks/node_server` to see the node express server implementation.
 
-The cpp_http_server is ~1.562x faster in throughput or about 56.2% higher request rate. 
+The cpp_http_server is ~1.693x faster in throughput or about 69.3% higher request rate. Nice! 
 
-Calculation: 27,366.734925 RPS / 17,524.167725 RPS = ~1.5612
+Calculation: 29,675.882135 RPS / 17,524.167725 RPS = ~1.693
 
-| Metric             | **C++ Server**    | **Node + Express** |
-|--------------------|-------------------|--------------------|
-| Target rate        | 30,000.00 RPS     | 30,000.00 RPS      |
-| Actual RPS         | 27,366.734925 RPS | 17,524.167725 RPS  |
-| Total requests     | 280,791           | 176,924            |
-| Dropped iterations | 19,214            | 123,126            |
-| Average latency    | 5.47 ms           | 46.88 ms           |
-| Median latency     | 3.44 ms           | 34.1 ms            |
-| p90 latency        | 13.55 ms          | 103.24 ms          |
-| p95 latency        | 17.34 ms          | 132.88 ms          |
-| p99 latency        | 26.06 ms          | 192.68 ms          |
-| Max latency        | 219.18 ms         | 445.75 ms          |
-| Error rate         | 0.00%             | 0.00%              |
-| Peak VUs           | 945               | 1,693              |
-| Iterations/sec     | 27,366.734925     | 17,524.167725      |
+| Metric             | **C++ Server (updated)** | **Node + Express** |
+| ------------------ | ------------------------ | ------------------ |
+| Target RPS         | 30,000.00                | 30,000.00          |
+| Actual RPS         | 29,675.882135            | 17,524.167725      |
+| Total requests     | 296,824                  | 176,924            |
+| Dropped iterations | 3,180                    | 123,126            |
+| Avg latency        | 1.12 ms                  | 46.88 ms           |
+| Median latency     | 404.76 µs                | 34.1 ms            |
+| p90 latency        | 3.24 ms                  | 103.24 ms          |
+| p95 latency        | 4.3 ms                   | 132.88 ms          |
+| p99 latency        | 6.58 ms                  | 192.68 ms          |
+| Max latency        | 22.7 ms                  | 445.75 ms          |
+| Error rate         | 0.00%                    | 0.00%              |
+| Peak VUs           | 332                      | 1,693              |
+| Iterations/sec     | 29,675.882135            | 17,524.167725      |
+
 
 ---
 
