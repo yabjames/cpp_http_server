@@ -18,8 +18,14 @@ export const options = {
   },
 };
 
+function rand(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export default function () {
-  const res = http.post("http://localhost:3490/test2/123/foo/432");
+  const res = http.post(`http://localhost:3490/test2/${rand(0,999)}/foo/123`);
   check(res, {
     "response code was 200": (res) => res.status == 200,
   });
