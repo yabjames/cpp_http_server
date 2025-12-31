@@ -1,6 +1,6 @@
 # C++ HTTP Server
 
-A modern C++ HTTP server implementation with routing, testing, and CI-driven quality checks.
+A modern multi-threaded C++ HTTP server implementation with routing, testing, and CI-driven quality checks.
 
 ---
 
@@ -30,6 +30,7 @@ A modern C++ HTTP server implementation with routing, testing, and CI-driven qua
 
 * **Route compilation and matching** with support for path parameters
   * Easily map functions to a new route
+* **Multi-threading** workloads to handle multiple requests at once
 * **Automated test suite** using GoogleTest (gtest) with CI/CD pipeline
 * **Code coverage reporting** using `lcov`
     * Automated code coverage with CI/CD pipeline
@@ -259,6 +260,7 @@ Development tasks and progress are tracked using a **GitHub Projects Kanban boar
 * **Designing extensible routing systems** in C++ requires careful separation between route compilation and request
   matching
 * **Understanding of TCP and port implementation on Linux**
+* **Multi-threading** and atomic operations on shared memory
 * **Parsing of strings** (client requests) to get individual strings (HTTP method, route, request body)
 * **Implementing Test driven development (TDD)** to improve confidence in changes and reduce regressions when refactoring
 * **Setting up code coverage tools** (lcov) provide insight on what portions of the codebase are covered by testing
@@ -267,6 +269,8 @@ Development tasks and progress are tracked using a **GitHub Projects Kanban boar
 
 
 C++ specific lessons learned:
+* **Multi-threading** and atomic operations on shared memory
+  * Creating atomic data structures (e.g. Atomic Queues)
 * **Using Conan** to simplify dependency management across environments
 * **Learning CMake**
   * Creating functions in CMake to automatically generate code coverage reports
