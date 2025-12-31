@@ -73,25 +73,26 @@ As such, these results demonstrate that the server can reliably handle at least 
 I made sure that the node express server implemented multi-threading to provide a more fair comparison with the cpp_http_server.
 Check out `benchmarks/node_server` to see the node express server implementation.
 
-The cpp_http_server is ~1.693x faster in throughput or about 69.3% higher request rate. Nice! 
+The cpp_http_server is ~1.45x faster in throughput or about 44.9% higher request rate. Nice! 
 
-Calculation: 29,675.882135 RPS / 17,524.167725 RPS = ~1.693
+Calculation: 29,675.882135 RPS / 20,468.045127 RPS = ~1.449
 
-| Metric             | **C++ Server (updated)** | **Node + Express** |
-| ------------------ | ------------------------ | ------------------ |
-| Target RPS         | 30,000.00                | 30,000.00          |
-| Actual RPS         | 29,675.882135            | 17,524.167725      |
-| Total requests     | 296,824                  | 176,924            |
-| Dropped iterations | 3,180                    | 123,126            |
-| Avg latency        | 1.12 ms                  | 46.88 ms           |
-| Median latency     | 404.76 µs                | 34.1 ms            |
-| p90 latency        | 3.24 ms                  | 103.24 ms          |
-| p95 latency        | 4.3 ms                   | 132.88 ms          |
-| p99 latency        | 6.58 ms                  | 192.68 ms          |
-| Max latency        | 22.7 ms                  | 445.75 ms          |
-| Error rate         | 0.00%                    | 0.00%              |
-| Peak VUs           | 332                      | 1,693              |
-| Iterations/sec     | 29,675.882135            | 17,524.167725      |
+| Metric             | **C++ Server** | **Node + Express** |
+|--------------------|----------------|--------------------|
+| Target RPS         | 30,000.00      | 30,000.00          |
+| Actual RPS         | 29,675.882135  | 20,468.045127      |
+| Total requests     | 296,824        | 205,983            |
+| Dropped iterations | 3,180          | 123,126            |
+| Avg latency        | 1.12 ms        | 38.99 ms           |
+| Median latency     | 404.76 µs      | 30.25 ms           |
+| p90 latency        | 3.24 ms        | 81.37 ms           |
+| p95 latency        | 4.3 ms         | 102.58 ms          |
+| p99 latency        | 6.58 ms        | 149.76 ms          |
+| Max latency        | 22.7 ms        | 318.66 ms          |
+| Error rate         | 0.00%          | 0.00%              |
+| Peak VUs           | 332            | 1,547              |
+
+
 
 
 ---
