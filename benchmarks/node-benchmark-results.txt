@@ -1,9 +1,9 @@
 
-         /\      Grafana   /‾‾/
-    /\  /  \     |\  __   /  /
-   /  \/    \    | |/ /  /   ‾‾\
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
   /          \   |   (  |  (‾)  |
- / __________ \  |_|\_\  \_____/
+ / __________ \  |_|\_\  \_____/ 
 
      execution: local
         script: k6.js
@@ -14,42 +14,42 @@
 
 
 
-  █ THRESHOLDS
+  █ THRESHOLDS 
 
     http_req_duration
-    ✓ 'p(99)<1000' p(99)=192.68ms
+    ✓ 'p(99)<1000' p(99)=149.76ms
 
     http_req_failed
     ✓ 'rate<0.01' rate=0.00%
 
 
-  █ TOTAL RESULTS
+  █ TOTAL RESULTS 
 
-    checks_total.......: 176924  17524.167725/s
-    checks_succeeded...: 100.00% 176924 out of 176924
-    checks_failed......: 0.00%   0 out of 176924
+    checks_total.......: 205983  20468.045127/s
+    checks_succeeded...: 100.00% 205983 out of 205983
+    checks_failed......: 0.00%   0 out of 205983
 
     ✓ response code was 200
 
     HTTP
-    http_req_duration..............: avg=46.88ms min=180.69µs med=34.1ms  max=445.75ms p(90)=103.24ms p(95)=132.88ms
-      { expected_response:true }...: avg=46.88ms min=180.69µs med=34.1ms  max=445.75ms p(90)=103.24ms p(95)=132.88ms
-    http_req_failed................: 0.00%  0 out of 176924
-    http_reqs......................: 176924 17524.167725/s
+    http_req_duration..............: avg=38.99ms min=221µs    med=30.25ms max=318.66ms p(90)=81.37ms p(95)=102.58ms
+      { expected_response:true }...: avg=38.99ms min=221µs    med=30.25ms max=318.66ms p(90)=81.37ms p(95)=102.58ms
+    http_req_failed................: 0.00%  0 out of 205983
+    http_reqs......................: 205983 20468.045127/s
 
     EXECUTION
-    dropped_iterations.............: 123126 12195.522797/s
-    iteration_duration.............: avg=50.97ms min=253.76µs med=37.01ms max=468.22ms p(90)=112.5ms  p(95)=142.84ms
-    iterations.....................: 176924 17524.167725/s
-    vus............................: 1679   min=249         max=1679
-    vus_max........................: 1693   min=474         max=1693
+    dropped_iterations.............: 94056  9346.122993/s
+    iteration_duration.............: avg=42.23ms min=299.06µs med=32.98ms max=338.26ms p(90)=87.68ms p(95)=109.67ms
+    iterations.....................: 205983 20468.045127/s
+    vus............................: 1494   min=446         max=1494
+    vus_max........................: 1547   min=453         max=1547
 
     NETWORK
-    data_received..................: 46 MB  4.6 MB/s
-    data_sent......................: 19 MB  1.9 MB/s
+    data_received..................: 54 MB  5.3 MB/s
+    data_sent......................: 22 MB  2.2 MB/s
 
 
 
 
-running (10.1s), 00000/01695 VUs, 176924 complete and 0 interrupted iterations
-constant_request_rate ✓ [ 100% ] 00000/01695 VUs  10s  30000.00 iters/s
+running (10.1s), 00000/01549 VUs, 205983 complete and 0 interrupted iterations
+constant_request_rate ✓ [ 100% ] 00000/01549 VUs  10s  30000.00 iters/s
