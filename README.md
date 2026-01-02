@@ -139,8 +139,9 @@ try {
 .
 ├── src/                # Server implementation
 ├── include/            # Public headers
-├── tests/              # gtest-based test suite
-├── cmake/              # CMake helpers
+├── test/               # gtest-based test suite
+├── demo/               # demo of the library implementation
+├── benchmarks/         # k6 performance benchmark outputs with a node server comparison
 ├── .github/            # GitHub Actions workflows
 └── README.md
 ```
@@ -186,16 +187,16 @@ conan build . --build=missing -s build_type=Debug
 
 ---
 
-## Running the Server
+## Running the Server Demo
 
 Command to run the HTTP server implementation example:
 
 ```bash
 # in release mode
-./build/Release/server_impl_bin
+./build/Release/demo/server_demo_bin
 
 # in debug mode
-./build/Debug/server_impl_bin
+./build/Debug/demo/server_demo_bin
 ```
 
 ---

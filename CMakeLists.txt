@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
-project(http_server VERSION 1.0 LANGUAGES C CXX)
+project(http_server_library VERSION 1.0 LANGUAGES C CXX)
+
+add_subdirectory(demo)
 
 set(LIBRARY "server_library")
 set(TEST_TARGET "server_tests_bin")
-set(TARGET "server_impl_bin")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Override Debug flags
@@ -17,7 +18,7 @@ find_package(Threads REQUIRED)
 
 
 # server library
-add_library(${LIBRARY}
+add_library(${LIBRARY} STATIC
         src/HttpServer.cpp
         src/HttpParser.cpp
         src/PathParams.cpp
@@ -45,14 +46,6 @@ target_link_libraries(${TEST_TARGET}
 
 include(GoogleTest)
 gtest_discover_tests(${TEST_TARGET})
-
-
-# server implementation executable
-add_executable(${TARGET}
-        src/main.cpp
-)
-target_link_options(${TARGET} PRIVATE -O0 -g --coverage)
-target_link_libraries(${TARGET} PRIVATE ${LIBRARY})
 
 
 # coverage target
