@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../include/HttpParser.h"
+#include "HttpParser.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
